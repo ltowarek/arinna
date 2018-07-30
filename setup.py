@@ -6,7 +6,7 @@ with open('README.md') as f:
 
 setuptools.setup(
     name='arinna',
-    author='Łukasz Towarek',
+    author='Lukasz Towarek',
     author_email='lukasz.towarek@gmail.com',
     description='',
     long_description=long_description,
