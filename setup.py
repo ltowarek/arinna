@@ -17,7 +17,7 @@ setuptools.setup(
         'License :: OSI Approved :: Apache Software License',
         'Operating System :: POSIX :: Linux'
     ),
-    use_scm_version={'root': '..', 'relative_to': __file__, 'write_to': 'solar_power_manager/arinna/version.py'},
+    use_scm_version={'write_to': 'arinna/version.py'},
     setup_requires=['setuptools_scm'],
     install_requires=[
         'paho-mqtt',
