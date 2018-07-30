@@ -1,0 +1,12 @@
+[Unit]
+Description=Arinna service
+After=network.target
+Wants=influxdb.service mosquitto.service grafana-server.service
+
+[Service]
+ExecStart=arinna
+User=arinna
+Group=arinna
+
+[Install]
+WantedBy=multi-user.target
