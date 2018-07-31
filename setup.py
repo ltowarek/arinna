@@ -11,7 +11,8 @@ setuptools.setup(
     description='',
     long_description=long_description,
     long_description_content_type='text/markdown',
-    packages=setuptools.find_packages(include=['arinna']),
+    packages=setuptools.find_packages('src'),
+    package_dir={'': 'src'},
     classifiers=(
         'Programming Language :: Python',
         'Programming Language :: Python :: 3',
@@ -19,7 +20,7 @@ setuptools.setup(
         'Operating System :: POSIX',
         'Operating System :: Unix'
     ),
-    use_scm_version={'write_to': 'arinna/version.py'},
+    use_scm_version={'write_to': 'src/arinna/version.py'},
     setup_requires=['setuptools_scm'],
     install_requires=[
         'paho-mqtt',
