@@ -13,9 +13,11 @@ setuptools.setup(
     long_description_content_type='text/markdown',
     packages=setuptools.find_packages(include=['arinna']),
     classifiers=(
+        'Programming Language :: Python',
         'Programming Language :: Python :: 3',
-        'License :: OSI Approved :: Apache Software License',
-        'Operating System :: POSIX :: Linux'
+        'License :: OSI Approved :: MIT License',
+        'Operating System :: POSIX',
+        'Operating System :: Unix'
     ),
     use_scm_version={'write_to': 'arinna/version.py'},
     setup_requires=['setuptools_scm'],
