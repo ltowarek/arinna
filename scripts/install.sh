@@ -16,7 +16,7 @@ sudo apt-get install -y python3 python3-pip python3-virtualenv
 python3 -m virtualenv -p python3 venv
 
 . ../venv/bin/activate
-pip install -r requirements.txt
+pip install -e .[dev]
 deactivate
 
 sudo apt-get update
