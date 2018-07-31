@@ -9,12 +9,9 @@ import serial
 import sys
 import arinna.config as config
 
-
 logger = logging.getLogger(__name__)
 
-
 ResponseToken = namedtuple('ResponseToken', ['name', 'start', 'end'])
-
 
 tokens = [
     ResponseToken('grid_voltage', 1, 6),
@@ -64,7 +61,8 @@ def parse_response(raw_response):
             current_byte_id = 0
             current_token_id = 0
         else:
-            if current_token_id < len(tokens) and current_byte_id == tokens[current_token_id].end:
+            if current_token_id < len(tokens) and \
+               current_byte_id == tokens[current_token_id].end:
                 logger.debug('Updating response')
                 key = tokens[current_token_id].name
                 value = current_token_value
@@ -73,8 +71,10 @@ def parse_response(raw_response):
                 response[key] = value
                 current_token_id += 1
                 logger.debug('Response updated')
-                logger.debug('Increasing token id to: {}'.format(current_token_id))
-            if current_token_id < len(tokens) and current_byte_id == tokens[current_token_id].start:
+                logger.debug(
+                    'Increasing token id to: {}'.format(current_token_id))
+            if current_token_id < len(tokens) and \
+               current_byte_id == tokens[current_token_id].start:
                 logging.debug('Resetting current token value')
                 current_token_value = ''
             current_token_value = current_token_value + c
@@ -109,14 +109,16 @@ def on_message(_, serial_port, message):
 def setup_logging(logs_directory):
     logger.setLevel(logging.DEBUG)
 
-    file_handler = logging.handlers.TimedRotatingFileHandler(os.path.join(logs_directory, 'inverter_provider.log'),
-                                                             interval=5, when='m', backupCount=1)
+    file_handler = logging.handlers.TimedRotatingFileHandler(
+        os.path.join(logs_directory, 'inverter_provider.log'),
+        interval=5, when='m', backupCount=1)
     file_handler.setLevel(logging.DEBUG)
 
     console_handler = logging.StreamHandler()
     console_handler.setLevel(logging.INFO)
 
-    formatter = logging.Formatter('%(asctime)s - %(name)s - %(levelname)s - %(message)s')
+    formatter = logging.Formatter(
+        '%(asctime)s - %(name)s - %(levelname)s - %(message)s')
     file_handler.setFormatter(formatter)
     console_handler.setFormatter(formatter)
 
@@ -137,7 +139,8 @@ def main():
         logger.info('Starting MQTT loop')
         client.loop_start()
 
-        logger.info('Starting listening on port: {}'.format(settings.serial_port))
+        logger.info(
+            'Starting listening on port: {}'.format(settings.serial_port))
         while True:
             with serial.Serial(settings.serial_port, 2400) as s:
                 raw_response = s.read_until(b'\r')
