@@ -1,0 +1,10 @@
+[paths]
+source =
+    src/arinna
+    */site-packages/arinna
+
+[run]
+branch = True
+source =
+    arinna
+    tests
