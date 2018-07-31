@@ -31,7 +31,8 @@ setuptools.setup(
     ],
     extras_require={
         'dev': [
-            'setuptools_scm'
+            'setuptools_scm',
+            'tox'
         ]
     },
     url='https://github.com/ltowarek/arinna',
