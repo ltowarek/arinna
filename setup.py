@@ -39,14 +39,5 @@ setuptools.setup(
     project_urls={
         'Bug Reports': 'https://github.com/ltowarek/arinna/issues',
         'Source': 'https://github.com/ltowarek/arinna',
-    },
-    entry_points={
-        'console_scripts': [
-            'arinna = arinna.__main__:main',
-            'arinna-database = arinna.database_provider:main',
-            'arinna-inverter = arinna.inverter_provider:main',
-            'arinna-scheduler = arinna.scheduler:main',
-            'arinna-publisher = arinna.publisher:main'
-        ]
     }
 )
