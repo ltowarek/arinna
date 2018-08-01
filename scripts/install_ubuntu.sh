@@ -26,4 +26,10 @@ sudo dpkg -i grafana_5.2.1_amd64.deb
 rm grafana_5.2.1_amd64.deb
 sudo systemctl disable grafana-server
 
-mkdir -p logs
+sudo mkdir /etc/arinna
+sudo chown developer:developer /etc/arinna
+
+sudo mkdir /var/log/arinna
+sudo chown developer:developer /var/log/arinna
+
+cp resources/config.yaml /etc/arinna
