@@ -12,7 +12,7 @@ logger = logging.getLogger(__name__)
 
 
 def get_command_line():
-    return 'arinna-publisher'
+    return 'python3 -m arinna.publisher'
 
 
 def register():
