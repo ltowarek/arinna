@@ -47,6 +47,9 @@ tokens = [
 ]
 
 
+qpigs = bytes.fromhex('51 50 49 47 53 b7 a9 0d')
+
+
 def parse_response(raw_response):
     response = {}
     current_byte_id = 0
@@ -101,8 +104,7 @@ def on_message(_, serial_port, message):
     logger.info('Message received')
     logger.info('Payload: {}'.format(message.payload))
     logger.info('Topic: {}'.format(message.topic))
-    qpigs = bytes.fromhex('51 50 49 47 53 b7 a9 0d')
-    with serial.Serial(serial_port, 2400) as s:
+    with serial_port as s:
         s.write(qpigs)
 
 
@@ -130,7 +132,9 @@ def main():
     settings = config.load()
     setup_logging(settings.logs_directory)
 
-    client = paho.mqtt.client.Client(userdata=settings.serial_port)
+    serial_port = serial.Serial(settings.serial_port, 2400)
+
+    client = paho.mqtt.client.Client(userdata=serial_port)
     client.on_message = on_message
     client.connect('localhost')
     client.subscribe('inverter/request')
@@ -142,7 +146,7 @@ def main():
         logger.info(
             'Starting listening on port: {}'.format(settings.serial_port))
         while True:
-            with serial.Serial(settings.serial_port, 2400) as s:
+            with serial_port as s:
                 raw_response = s.read_until(b'\r')
                 logger.info('Raw response: {}'.format(raw_response))
 
