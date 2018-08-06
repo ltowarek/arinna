@@ -32,7 +32,8 @@ setuptools.setup(
     extras_require={
         'dev': [
             'setuptools_scm',
-            'tox'
+            'tox',
+            'pytest'
         ]
     },
     url='https://github.com/ltowarek/arinna',
