@@ -1,0 +1,12 @@
+[Unit]
+Description=Arinna publisher service
+Wants=mosquitto.service
+
+[Service]
+Type=simple
+ExecStart=/usr/bin/python3 -m arinna.publisher
+User=developer
+Group=developer
+
+[Install]
+WantedBy=multi-user.target

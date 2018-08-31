@@ -26,7 +26,6 @@ setuptools.setup(
         'paho-mqtt',
         'influxdb',
         'pyserial',
-        'python-crontab',
         'pyyaml'
     ],
     extras_require={

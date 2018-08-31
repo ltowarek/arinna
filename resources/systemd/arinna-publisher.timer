@@ -1,0 +1,10 @@
+[Unit]
+Description=Arinna publisher timer
+PartOf=arinna.target
+
+[Timer]
+OnUnitActiveSec=10s
+AccuracySec=1s
+
+[Install]
+WantedBy=arinna.target
