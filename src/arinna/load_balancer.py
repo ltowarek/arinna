@@ -10,6 +10,23 @@ import arinna.config as config
 logger = logging.getLogger(__name__)
 
 
+def can_add_load(battery_voltage, pv_voltage_stddev):
+    if not battery_voltage or not pv_voltage_stddev:
+        return False
+    if is_battery_fully_charged(battery_voltage) and \
+            is_maximum_power_point_reached(pv_voltage_stddev):
+        return True
+    return False
+
+
+def is_battery_fully_charged(voltage):
+    return voltage >= 56.0
+
+
+def is_maximum_power_point_reached(voltage_stddev):
+    return voltage_stddev < 1.0
+
+
 def on_message(_, __, message):
     logger.info('Message received')
     logger.info('Payload: {}'.format(message.payload))
