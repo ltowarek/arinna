@@ -104,8 +104,7 @@ def on_message(_, serial_port, message):
     logger.info('Message received')
     logger.info('Payload: {}'.format(message.payload))
     logger.info('Topic: {}'.format(message.topic))
-    with serial_port as s:
-        s.write(qpigs)
+    serial_port.write(qpigs)
 
 
 def setup_logging(logs_directory):
