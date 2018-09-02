@@ -202,7 +202,7 @@ def main():
     except KeyboardInterrupt:
         logger.info('MQTT loop stopped by user')
     except Exception as e:
-        logger.exception('Unknown exception occurred', e)
+        logger.exception('Unknown exception occurred')
     finally:
         mqtt_client.close()
     logger.info('MQTT loop stopped')

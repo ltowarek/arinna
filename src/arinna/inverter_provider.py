@@ -161,7 +161,7 @@ def main():
     except KeyboardInterrupt:
         logger.info('Listening loop stopped by user')
     except Exception as e:
-        logger.exception('Unknown exception occurred', e)
+        logger.exception('Unknown exception occurred')
     finally:
         client.loop_stop()
         client.disconnect()
