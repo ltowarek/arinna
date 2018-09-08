@@ -12,19 +12,19 @@ logger = logging.getLogger(__name__)
 
 
 class DatabaseClient:
-    def __init__(self):
+    def __init__(self, db_name='inverter'):
         self.db_client = None
+        self.db_name = db_name
 
     def initialize(self, host='localhost'):
         logger.info('Initializing database client')
         self.db_client = influxdb.InfluxDBClient(host)
         databases = self.db_client.get_list_database()
-        database_name = 'inverter'
-        if database_name not in [d['name'] for d in databases]:
-            logger.warning('Database not found: {}'.format(database_name))
-            logger.info('Creating new database: {}'.format(database_name))
-            self.db_client.create_database(database_name)
-        self.db_client.switch_database(database_name)
+        if self.db_name not in [d['name'] for d in databases]:
+            logger.warning('Database not found: {}'.format(self.db_name))
+            logger.info('Creating new database: {}'.format(self.db_name))
+            self.db_client.create_database(self.db_name)
+        self.db_client.switch_database(self.db_name)
         logger.info('Database client initialized')
 
     def close(self):
@@ -43,6 +43,23 @@ class DatabaseClient:
             }
         }])
         logger.info('Points saved into database')
+
+    def moving_average(self, measurement, time_window):
+        logger.info('Getting moving average')
+        logger.info('Measurement: {}'.format(measurement))
+        logger.info('Time window: {}s'.format(time_window))
+        query = 'SELECT MEAN("value") ' \
+                'FROM "{}" WHERE time > now() - {}s'.format(measurement,
+                                                            time_window)
+        logger.debug('Query: {}'.format(query))
+        result = self.db_client.query(query)
+        logger.info('Moving average get')
+        return next(result.get_points(measurement))['mean']
+
+    def drop_database(self):
+        logger.info('Dropping database: {}'.format(self.db_name))
+        self.db_client.drop_database(self.db_name)
+        logger.info('Database dropped')
 
 
 def on_message(_, subscriptions, message):
