@@ -56,6 +56,18 @@ class DatabaseClient:
         logger.info('Moving average get')
         return next(result.get_points(measurement))['mean']
 
+    def moving_stddev(self, measurement, time_window):
+        logger.info('Getting moving stddev')
+        logger.info('Measurement: {}'.format(measurement))
+        logger.info('Time window: {}s'.format(time_window))
+        query = 'SELECT STDDEV("value") ' \
+                'FROM "{}" WHERE time > now() - {}s'.format(measurement,
+                                                            time_window)
+        logger.debug('Query: {}'.format(query))
+        result = self.db_client.query(query)
+        logger.info('Moving stddev get')
+        return next(result.get_points(measurement))['stddev']
+
     def drop_database(self):
         logger.info('Dropping database: {}'.format(self.db_name))
         self.db_client.drop_database(self.db_name)

@@ -41,3 +41,24 @@ def test_moving_average_of_last_2_measurements(database_client):
     expected = statistics.mean(values[-2:])
     actual = database_client.moving_average(measurement, time_window=3)
     assert expected == actual
+
+
+def test_moving_stddev_of_all_measurements(database_client):
+    measurement = 'test_measurement'
+    values = range(1, 4)
+    populate_measurement_with_1s_delay(database_client, measurement, values)
+
+    expected = statistics.stdev(values)
+    actual = database_client.moving_stddev(measurement,
+                                           time_window=len(values) + 1)
+    assert expected == actual
+
+
+def test_moving_stddev_of_last_3_measurements(database_client):
+    measurement = 'test_measurement'
+    values = range(1, 4)
+    populate_measurement_with_1s_delay(database_client, measurement, values)
+
+    expected = statistics.stdev(values[-3:])
+    actual = database_client.moving_stddev(measurement, time_window=4)
+    assert expected == actual
