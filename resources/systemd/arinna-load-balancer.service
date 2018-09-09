@@ -1,0 +1,12 @@
+[Unit]
+Description=Arinna load balancer service
+Wants=influxdb.service
+
+[Service]
+Type=simple
+ExecStart=/usr/bin/python3 -m arinna.load_balancer
+User=developer
+Group=developer
+
+[Install]
+WantedBy=multi-user.target
