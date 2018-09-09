@@ -29,10 +29,8 @@ def is_maximum_power_point_reached(voltage_stddev):
 
 def set_additional_load_state(is_enabled):
     logger.info('Setting additional load state')
-    client = db.DatabaseClient('load')
-    client.initialize()
-    client.save('is_enabled', is_enabled)
-    client.close()
+    with db.DatabaseClient('load') as client:
+        client.save('is_enabled', is_enabled)
     logger.info('Additional load state set')
 
 
@@ -72,20 +70,17 @@ def main():
     settings = config.load()
     setup_logging(settings.logs_directory)
 
-    client = db.DatabaseClient()
     try:
-        client.initialize()
-        battery_voltage = client.moving_average('battery_voltage', '1m')
-        pv_input_voltage_stddev = client.moving_stddev('pv_input_voltage',
-                                                       '1m')
+        with db.DatabaseClient() as client:
+            battery_voltage = client.moving_average('battery_voltage', '1m')
+            pv_input_voltage_stddev = client.moving_stddev('pv_input_voltage',
+                                                           '1m')
         if can_add_load(battery_voltage, pv_input_voltage_stddev):
             enable_additional_load()
         else:
             disable_additional_load()
     except Exception:
         logger.exception('Unknown exception occurred')
-    finally:
-        client.close()
 
     return 0
 

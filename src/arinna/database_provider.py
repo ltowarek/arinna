@@ -73,19 +73,26 @@ class DatabaseClient:
         self.db_client.drop_database(self.db_name)
         logger.info('Database dropped')
 
+    def __enter__(self):
+        logger.debug('Entering context manager')
+        self.initialize()
+        return self
+
+    def __exit__(self, exc_type, exc_val, exc_tb):
+        logger.debug('Exiting context manager')
+        self.close()
+
 
 def on_message(_, subscriptions, message):
     logger.info('Message received')
     logger.info('Payload: {}'.format(message.payload))
     logger.info('Topic: {}'.format(message.topic))
-    db_client = DatabaseClient()
-    db_client.initialize()
     topic = message.topic
     subscription = subscriptions[topic]
     raw_value = message.payload.decode().replace(',', '.')
-    db_client.save(subscription['measurement'],
-                   subscription['type'](raw_value))
-    db_client.close()
+    with DatabaseClient() as db_client:
+        db_client.save(subscription['measurement'],
+                       subscription['type'](raw_value))
 
 
 class MQTTClient:
