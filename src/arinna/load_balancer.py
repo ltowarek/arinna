@@ -82,8 +82,6 @@ def main():
             enable_additional_load()
         else:
             disable_additional_load()
-    except KeyboardInterrupt:
-        logger.info('Listening loop stopped by user')
     except Exception:
         logger.exception('Unknown exception occurred')
     finally:
