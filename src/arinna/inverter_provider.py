@@ -159,7 +159,7 @@ def main():
                 publish_response(parsed_response, client)
     except KeyboardInterrupt:
         logger.info('Listening loop stopped by user')
-    except Exception as e:
+    except Exception:
         logger.exception('Unknown exception occurred')
     finally:
         client.loop_stop()

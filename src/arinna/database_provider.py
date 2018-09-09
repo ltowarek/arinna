@@ -47,10 +47,10 @@ class DatabaseClient:
     def moving_average(self, measurement, time_window):
         logger.info('Getting moving average')
         logger.info('Measurement: {}'.format(measurement))
-        logger.info('Time window: {}s'.format(time_window))
+        logger.info('Time window: {}'.format(time_window))
         query = 'SELECT MEAN("value") ' \
-                'FROM "{}" WHERE time > now() - {}s'.format(measurement,
-                                                            time_window)
+                'FROM "{}" WHERE time > now() - {}'.format(measurement,
+                                                           time_window)
         logger.debug('Query: {}'.format(query))
         result = self.db_client.query(query)
         logger.info('Moving average get')
@@ -59,10 +59,10 @@ class DatabaseClient:
     def moving_stddev(self, measurement, time_window):
         logger.info('Getting moving stddev')
         logger.info('Measurement: {}'.format(measurement))
-        logger.info('Time window: {}s'.format(time_window))
+        logger.info('Time window: {}'.format(time_window))
         query = 'SELECT STDDEV("value") ' \
-                'FROM "{}" WHERE time > now() - {}s'.format(measurement,
-                                                            time_window)
+                'FROM "{}" WHERE time > now() - {}'.format(measurement,
+                                                           time_window)
         logger.debug('Query: {}'.format(query))
         result = self.db_client.query(query)
         logger.info('Moving stddev get')
@@ -230,7 +230,7 @@ def main():
         mqtt_client.loop_forever()
     except KeyboardInterrupt:
         logger.info('MQTT loop stopped by user')
-    except Exception as e:
+    except Exception:
         logger.exception('Unknown exception occurred')
     finally:
         mqtt_client.close()

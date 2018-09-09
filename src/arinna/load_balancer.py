@@ -1,11 +1,11 @@
 #!/usr/bin/env python3
 
-import paho.mqtt.client
 import logging
 import logging.handlers
 import os
 import sys
 import arinna.config as config
+import arinna.database_provider as db
 
 logger = logging.getLogger(__name__)
 
@@ -27,10 +27,25 @@ def is_maximum_power_point_reached(voltage_stddev):
     return voltage_stddev < 1.0
 
 
-def on_message(_, __, message):
-    logger.info('Message received')
-    logger.info('Payload: {}'.format(message.payload))
-    logger.info('Topic: {}'.format(message.topic))
+def set_additional_load_state(is_enabled):
+    logger.info('Setting additional load state')
+    client = db.DatabaseClient('load')
+    client.initialize()
+    client.save('is_enabled', is_enabled)
+    client.close()
+    logger.info('Additional load state set')
+
+
+def enable_additional_load():
+    logger.info('Enabling additional load')
+    set_additional_load_state(True)
+    logger.info('Additional load enabled')
+
+
+def disable_additional_load():
+    logger.info('Disabling additional load')
+    set_additional_load_state(False)
+    logger.info('Additional load disabled')
 
 
 def setup_logging(logs_directory):
@@ -57,21 +72,22 @@ def main():
     settings = config.load()
     setup_logging(settings.logs_directory)
 
-    client = paho.mqtt.client.Client()
-    client.on_message = on_message
-    client.connect('localhost')
-    client.subscribe('inverter/request')
-
+    client = db.DatabaseClient()
     try:
-        logger.info('Starting MQTT loop')
-        client.loop_forever()
+        client.initialize()
+        battery_voltage = client.moving_average('battery_voltage', '1m')
+        pv_input_voltage_stddev = client.moving_stddev('pv_input_voltage',
+                                                       '1m')
+        if can_add_load(battery_voltage, pv_input_voltage_stddev):
+            enable_additional_load()
+        else:
+            disable_additional_load()
     except KeyboardInterrupt:
         logger.info('Listening loop stopped by user')
-    except Exception as e:
+    except Exception:
         logger.exception('Unknown exception occurred')
     finally:
-        client.disconnect()
-    logger.info('Listening loop stopped')
+        client.close()
 
     return 0
 
