@@ -1,29 +1,62 @@
 #!/usr/bin/env python3
 
-import arinna.load_balancer as lb
+from arinna.load_balancer import LoadBalancer
 
 
-def test_can_add_load_returns_false_without_readings():
-    assert False is lb.can_add_load(None, None)
-    assert False is lb.can_add_load(1, None)
-    assert False is lb.can_add_load(None, 1)
+class FakeDatabase:
+    moving_average_value = 56.0
+    moving_stddev_value = 0.5
+
+    def moving_average(self, measurement, _):
+        if measurement == 'battery_voltage':
+            return self.moving_average_value
+
+    def moving_stddev(self, measurement, _):
+        if measurement == 'pv_input_voltage':
+            return self.moving_stddev_value
 
 
-def test_can_add_load_returns_false_without_fully_charged_battery():
-    assert False is lb.can_add_load(55.0, 0.5)
+class FakeLoad:
+    is_enabled = False
+
+    def enable(self):
+        self.is_enabled = True
+
+    def disable(self):
+        self.is_enabled = False
 
 
-def test_can_add_load_returns_false_without_maximum_power_point_reached():
-    assert False is lb.can_add_load(56.0, 1.0)
+def test_balance_enables_load_given_proper_values():
+    fake_database = FakeDatabase()
+    fake_load = FakeLoad()
+
+    load_balancer = LoadBalancer(fake_database, fake_load)
+    load_balancer.balance()
+
+    assert True is fake_load.is_enabled
 
 
-def test_can_add_load_returns_true_with_fully_charged_battery():
-    assert True is lb.can_add_load(56.0, 0.5)
-    assert True is lb.can_add_load(57.0, 0.5)
-    assert True is lb.can_add_load(58.0, 0.5)
+def test_balance_disables_load_given_battery_is_not_fully_charged():
+    fake_database = FakeDatabase()
+    fake_database.moving_average_value = 55.0
+
+    fake_load = FakeLoad()
+    fake_load.is_enabled = True
+
+    load_balancer = LoadBalancer(fake_database, fake_load)
+    load_balancer.balance()
+
+    assert False is fake_load.is_enabled
 
 
-def test_can_add_load_returns_true_with_maximum_power_point_reached():
-    assert True is lb.can_add_load(56.0, 0.5)
-    assert True is lb.can_add_load(56.0, 0.1)
-    assert True is lb.can_add_load(56.0, 0.9)
+def test_balance_disables_load_given_maximum_power_point_is_not_reached():
+    fake_database = FakeDatabase()
+    fake_database.moving_stddev_value = 1.0
+
+    fake_load = FakeLoad()
+    fake_load.is_enabled = True
+
+    load_balancer = LoadBalancer(fake_database, fake_load)
+    load_balancer.balance()
+
+    assert False is fake_load.is_enabled
