@@ -12,13 +12,12 @@ logger = logging.getLogger(__name__)
 
 
 class DatabaseClient:
-    def __init__(self, db_name='inverter'):
-        self.db_client = None
+    def __init__(self, db_client, db_name='inverter'):
+        self.db_client = db_client
         self.db_name = db_name
 
-    def initialize(self, host='localhost'):
+    def initialize(self):
         logger.info('Initializing database client')
-        self.db_client = influxdb.InfluxDBClient(host)
         databases = self.db_client.get_list_database()
         if self.db_name not in [d['name'] for d in databases]:
             logger.warning('Database not found: {}'.format(self.db_name))
@@ -90,7 +89,7 @@ def on_message(_, subscriptions, message):
     topic = message.topic
     subscription = subscriptions[topic]
     raw_value = message.payload.decode().replace(',', '.')
-    with DatabaseClient() as db_client:
+    with DatabaseClient(influxdb.InfluxDBClient()) as db_client:
         db_client.save(subscription['measurement'],
                        subscription['type'](raw_value))
 
