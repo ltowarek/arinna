@@ -48,7 +48,9 @@ class DatabaseClient:
         result = self.db_client.query(query, database=self.db_name)
         logger.debug('Query result: {}'.format(result))
         logger.info('Moving average get')
-        return next(result.get_points(measurement))['mean']
+        for point in result.get_points(measurement):
+            return point['mean']
+        return None
 
     def moving_stddev(self, measurement, time_window):
         logger.info('Getting moving stddev')
