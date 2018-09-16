@@ -68,6 +68,10 @@ class DatabaseClient:
         self.db_client.drop_database(self.db_name)
         logger.info('Database dropped')
 
+    def __enter__(self):
+        logger.debug('Entering context manager')
+        return self
+
     def __exit__(self, exc_type, exc_val, exc_tb):
         logger.debug('Exiting context manager')
         self.close()
