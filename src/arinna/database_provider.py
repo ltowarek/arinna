@@ -17,16 +17,6 @@ class DatabaseClient:
         self.db_client = db_client
         self.db_name = db_name
 
-    def initialize(self):
-        logger.info('Initializing database client')
-        databases = self.db_client.get_list_database()
-        if self.db_name not in [d['name'] for d in databases]:
-            logger.warning('Database not found: {}'.format(self.db_name))
-            logger.info('Creating new database: {}'.format(self.db_name))
-            self.db_client.create_database(self.db_name)
-        self.db_client.switch_database(self.db_name)
-        logger.info('Database client initialized')
-
     def close(self):
         logger.info('Closing database connection')
         self.db_client.close()
@@ -41,7 +31,7 @@ class DatabaseClient:
             'fields': {
                 'value': value
             }
-        }])
+        }], database=self.db_name)
         if success:
             logger.info('Points saved into database')
         else:
@@ -55,7 +45,7 @@ class DatabaseClient:
                 'FROM "{}" WHERE time > now() - {}'.format(measurement,
                                                            time_window)
         logger.debug('Query: {}'.format(query))
-        result = self.db_client.query(query)
+        result = self.db_client.query(query, database=self.db_name)
         logger.debug('Query result: {}'.format(result))
         logger.info('Moving average get')
         return next(result.get_points(measurement))['mean']
@@ -68,7 +58,7 @@ class DatabaseClient:
                 'FROM "{}" WHERE time > now() - {}'.format(measurement,
                                                            time_window)
         logger.debug('Query: {}'.format(query))
-        result = self.db_client.query(query)
+        result = self.db_client.query(query, database=self.db_name)
         logger.debug('Query result: {}'.format(result))
         logger.info('Moving stddev get')
         return next(result.get_points(measurement))['stddev']
@@ -77,11 +67,6 @@ class DatabaseClient:
         logger.info('Dropping database: {}'.format(self.db_name))
         self.db_client.drop_database(self.db_name)
         logger.info('Database dropped')
-
-    def __enter__(self):
-        logger.debug('Entering context manager')
-        self.initialize()
-        return self
 
     def __exit__(self, exc_type, exc_val, exc_tb):
         logger.debug('Exiting context manager')

@@ -37,7 +37,7 @@ class FakeDatabase:
             'time': timestamp
         })
 
-    def query(self, query):
+    def query(self, query, database=None):
         m = re.match(r'SELECT (\w+)\("(\w+)"\) '
                      r'FROM "(\w+)" WHERE time > now\(\) - (\d+)(\w)', query)
         if not m:
@@ -71,19 +71,7 @@ class FakeDatabase:
 
         return FakeResultSet(series)
 
-    def write_points(self, points):
-        pass
-
-    def get_list_database(self):
-        pass
-
-    def create_database(self, name):
-        pass
-
-    def drop_database(self, name):
-        pass
-
-    def switch_database(self, name):
+    def write_points(self, points, database=None):
         pass
 
     def close(self):
