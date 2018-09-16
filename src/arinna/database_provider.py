@@ -12,7 +12,8 @@ logger = logging.getLogger(__name__)
 
 
 class DatabaseClient:
-    def __init__(self, db_client, db_name='inverter'):
+    def __init__(self, db_client=influxdb.InfluxDBClient(),
+                 db_name='inverter'):
         self.db_client = db_client
         self.db_name = db_name
 
