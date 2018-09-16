@@ -53,6 +53,7 @@ class DatabaseClient:
                                                            time_window)
         logger.debug('Query: {}'.format(query))
         result = self.db_client.query(query)
+        logger.debug('Query result: {}'.format(result))
         logger.info('Moving average get')
         return next(result.get_points(measurement))['mean']
 
@@ -65,6 +66,7 @@ class DatabaseClient:
                                                            time_window)
         logger.debug('Query: {}'.format(query))
         result = self.db_client.query(query)
+        logger.debug('Query result: {}'.format(result))
         logger.info('Moving stddev get')
         return next(result.get_points(measurement))['stddev']
 
