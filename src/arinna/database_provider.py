@@ -95,7 +95,7 @@ def on_message(_, subscriptions, message):
     topic = message.topic
     subscription = subscriptions[topic]
     raw_value = message.payload.decode().replace(',', '.')
-    with DatabaseClient(influxdb.InfluxDBClient()) as db_client:
+    with DatabaseClient() as db_client:
         db_client.save(subscription['measurement'],
                        subscription['type'](raw_value))
 
