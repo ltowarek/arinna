@@ -86,7 +86,7 @@ def main():
     setup_logging(settings.logs_directory)
 
     try:
-        with db.DatabaseClient('load') as load_database, \
+        with db.DatabaseClient(db_name='load') as load_database, \
                 db.DatabaseClient() as inverter_database:
             load = Load(load_database)
             load_balancer = LoadBalancer(inverter_database, load)
