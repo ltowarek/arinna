@@ -16,26 +16,10 @@ class FakeResultSet:
 
 class FakeDatabase:
     def __init__(self):
-        self.databases = {}
-        self.measurements = {}
-
-    def add_measurement(self, measurement):
-        self.measurements[measurement] = []
-
-    def add_values_to_measurement(self, values, measurement,
-                                  interval=datetime.timedelta(seconds=1)):
-        t = datetime.datetime.now() - len(values) * interval
-        for v in values:
-            self.add_value_to_measurement(v, measurement, t)
-            t += interval
-
-    def add_value_to_measurement(self, value, measurement, timestamp):
-        self.measurements[measurement].append({
-            'value': value,
-            'time': timestamp
-        })
+        self.data = {}
 
     def query(self, query, database=None):
+        now = datetime.datetime.utcnow()
         m = re.match(r'SELECT (\w+)\("(\w+)"\) '
                      r'FROM "(\w+)" WHERE time > now\(\) - (\d+)(\w)', query)
         if not m:
@@ -54,11 +38,10 @@ class FakeDatabase:
         else:
             timedelta = datetime.timedelta()
 
-        now = datetime.datetime.now()
         values = []
-        for m in self.measurements[measurement]:
-            if m['time'] > now - timedelta:
-                values.append(m[field])
+        for p in self.data[database]:
+            if p['measurement'] == measurement and p['time'] > now - timedelta:
+                values.append(p['fields'][field])
 
         series = []
         if values:
@@ -70,20 +53,30 @@ class FakeDatabase:
         return FakeResultSet(series)
 
     def write_points(self, points, database=None):
-        for point in points:
-            name = point['measurement']
-            measurement = {}
-            for key, value in point['fields'].items():
-                measurement[key] = value
-            if 'time' not in measurement:
-                measurement['time'] = datetime.datetime.now()
-            self.measurements.setdefault(name, []).append(measurement)
+        self.data[database].extend(points)
 
     def close(self):
         pass
 
     def create_database(self, database):
-        self.databases[database] = {}
+        self.data[database] = []
 
     def drop_database(self, database):
-        del self.databases[database]
+        del self.data[database]
+
+
+def get_points_with_interval(values, measurement,
+                             interval=datetime.timedelta(seconds=1)):
+    t = datetime.datetime.utcnow() - len(values) * interval
+    points = []
+    for v in values:
+        point = {
+            'measurement': measurement,
+            'time': t,
+            'fields': {
+                'value': v,
+            },
+        }
+        points.append(point)
+        t += interval
+    return points
