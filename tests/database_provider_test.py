@@ -2,7 +2,7 @@
 
 import arinna.database_provider as db
 import statistics
-from tests.fakes.database import FakeDatabase
+import influxdb
 from tests.fakes.database import get_points_with_interval
 
 import pytest
@@ -25,7 +25,7 @@ def sample_database():
 
 @pytest.fixture
 def database(sample_database):
-    d = FakeDatabase()
+    d = influxdb.InfluxDBClient()
     d.create_database(sample_database)
     yield d
     d.drop_database(sample_database)
