@@ -132,3 +132,9 @@ def test_moving_stddev_of_last_3_measurements(sample_data, sample_measurement,
     actual = database_client.moving_stddev(sample_measurement,
                                            time_window='4s')
     assert expected == actual
+
+
+def test_context_manager_support(fake_database):
+    database_client = db.DatabaseClient(fake_database)
+    with database_client as db_client:
+        assert db_client
