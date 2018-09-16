@@ -36,13 +36,16 @@ class DatabaseClient:
         logger.info('Saving points into database')
         logger.info('Measurement: {}'.format(measurement))
         logger.info('Value: {}'.format(value))
-        self.db_client.write_points([{
+        error = self.db_client.write_points([{
             'measurement': measurement,
             'fields': {
                 'value': value
             }
         }])
-        logger.info('Points saved into database')
+        if error:
+            logger.error('Failed to save points into database')
+        else:
+            logger.info('Points saved into database')
 
     def moving_average(self, measurement, time_window):
         logger.info('Getting moving average')
