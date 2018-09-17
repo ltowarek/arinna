@@ -109,3 +109,11 @@ def test_load(sample_data, sample_measurement,
     assert sample_data == database_client.load(sample_measurement,
                                                time_window='{}s'.format(
                                                    len(sample_data) + 1))
+
+
+def test_save(database, sample_measurement):
+    database_client = db.DatabaseClient(database)
+    values = [1, 2]
+    for v in values:
+        database_client.save(sample_measurement, v)
+    assert database_client.load(sample_measurement, '1s') == values
