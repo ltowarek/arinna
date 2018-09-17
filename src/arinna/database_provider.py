@@ -26,16 +26,13 @@ class DatabaseClient:
         logger.info('Saving points into database')
         logger.info('Measurement: {}'.format(measurement))
         logger.info('Value: {}'.format(value))
-        success = self.db_client.write_points([{
+        self.db_client.write_points([{
             'measurement': measurement,
             'fields': {
                 'value': value
             }
         }], database=self.db_name)
-        if success:
-            logger.info('Points saved into database')
-        else:
-            logger.error('Failed to save points into database')
+        logger.info('Points saved into database')
 
     def load(self, measurement, time_window):
         logger.info('Loading points from database')
