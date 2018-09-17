@@ -65,11 +65,6 @@ class DatabaseClient:
         logger.info('Moving stddev get')
         return next(result.get_points(measurement))['stddev']
 
-    def drop_database(self):
-        logger.info('Dropping database: {}'.format(self.db_name))
-        self.db_client.drop_database(self.db_name)
-        logger.info('Database dropped')
-
     def __enter__(self):
         logger.debug('Entering context manager')
         return self
