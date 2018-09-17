@@ -29,6 +29,7 @@ def database(sample_database):
     d.create_database(sample_database)
     yield d
     d.drop_database(sample_database)
+    d.close()
 
 
 @pytest.fixture
@@ -98,3 +99,13 @@ def test_context_manager_support(database):
     database_client = db.DatabaseClient(database)
     with database_client as db_client:
         assert db_client
+
+
+def test_load(sample_data, sample_measurement,
+              sample_database,
+              database_with_data):
+    database_client = db.DatabaseClient(database_with_data,
+                                        db_name=sample_database)
+    assert sample_data == database_client.load(sample_measurement,
+                                               time_window='{}s'.format(
+                                                   len(sample_data) + 1))

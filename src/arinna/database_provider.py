@@ -37,6 +37,19 @@ class DatabaseClient:
         else:
             logger.error('Failed to save points into database')
 
+    def load(self, measurement, time_window):
+        logger.info('Loading points from database')
+        logger.info('Measurement: {}'.format(measurement))
+        logger.info('Time window: {}'.format(time_window))
+        query = 'SELECT "value" ' \
+                'FROM "{}" WHERE time > now() - {}'.format(measurement,
+                                                           time_window)
+        logger.debug('Query: {}'.format(query))
+        result = self.db_client.query(query, database=self.db_name)
+        logger.debug('Query result: {}'.format(result))
+        logger.info('Points load from database')
+        return [point['value'] for point in result.get_points(measurement)]
+
     def moving_average(self, measurement, time_window):
         logger.info('Getting moving average')
         logger.info('Measurement: {}'.format(measurement))
