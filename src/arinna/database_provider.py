@@ -101,12 +101,12 @@ class MQTTClient:
         self.mqtt_client = mqtt_client
         self.subscriptions = {}
 
-    def initialize(self, host='localhost'):
-        logger.info('Initializing MQTT client')
+    def connect(self, host='localhost'):
+        logger.info('Connecting MQTT client')
         self.mqtt_client.user_data_set(self.subscriptions)
         self.mqtt_client.on_message = on_message
         self.mqtt_client.connect(host)
-        logger.info('MQTT client initialized')
+        logger.info('MQTT client connected')
 
     def subscribe(self, topic, measurement, type_converter):
         logger.info('Subscribing to new topic')
@@ -120,7 +120,7 @@ class MQTTClient:
         self.mqtt_client.subscribe(topic)
         logger.info('Subscribed to new topic')
 
-    def close(self):
+    def disconnect(self):
         logger.info('Disconnecting MQTT client')
         self.mqtt_client.disconnect()
         logger.info('MQTT client disconnected')
@@ -135,12 +135,12 @@ class MQTTClient:
 
     def __enter__(self):
         logger.debug('Entering context manager')
-        self.initialize()
+        self.connect()
         return self
 
     def __exit__(self, exc_type, exc_val, exc_tb):
         logger.debug('Exiting context manager')
-        self.close()
+        self.disconnect()
 
 
 def setup_logging(logs_directory):
@@ -178,8 +178,6 @@ def main():
     logger.info('MQTT loop started')
     try:
         with MQTTClient() as mqtt_client:
-            mqtt_client.initialize()
-
             mqtt_client.subscribe('inverter/response/grid_voltage',
                                   'grid_voltage',
                                   float)

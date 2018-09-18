@@ -2,6 +2,7 @@
 
 import arinna.database_provider as db
 import statistics
+import threading
 import influxdb
 from tests.fakes.database import get_points_with_interval
 
@@ -139,3 +140,14 @@ def test_percent():
 def test_mqtt_client_context_manager_support():
     with db.MQTTClient() as mqtt_client:
         assert mqtt_client
+
+
+def test_mqtt_client_stops_looping_when_disconnected():
+    mqtt_client = db.MQTTClient()
+    mqtt_client.connect()
+    t = threading.Thread(target=db.MQTTClient.loop_forever,
+                         args=(mqtt_client,))
+    t.start()
+    mqtt_client.disconnect()
+    t.join(timeout=5)
+    assert False is t.is_alive()
