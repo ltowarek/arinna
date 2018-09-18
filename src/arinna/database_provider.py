@@ -125,10 +125,6 @@ class MQTTClient:
         self.mqtt_client.disconnect()
         logger.info('MQTT client disconnected')
 
-    def loop(self):
-        logger.debug('MQTT client loop')
-        self.mqtt_client.loop()
-
     def loop_forever(self):
         logger.debug('Starting infinite MQTT client loop')
         self.mqtt_client.loop_forever()
