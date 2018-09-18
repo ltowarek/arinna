@@ -117,3 +117,11 @@ def test_save(database, sample_measurement):
     for v in values:
         database_client.save(sample_measurement, v)
     assert database_client.load(sample_measurement, '1s') == values
+
+
+def test_bool_from_string_true():
+    assert True is db.bool_from_string('1')
+
+
+def test_bool_from_string_false():
+    assert False is db.bool_from_string('0')
