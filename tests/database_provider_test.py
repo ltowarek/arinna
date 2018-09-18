@@ -95,7 +95,7 @@ def test_moving_stddev_of_last_3_measurements(sample_data, sample_measurement,
     assert expected == actual
 
 
-def test_context_manager_support(database):
+def test_database_client_context_manager_support(database):
     database_client = db.DatabaseClient(database)
     with database_client as db_client:
         assert db_client
@@ -134,3 +134,8 @@ def test_percent():
     assert 0.10 == db.percent(10)
     assert 0.20 == db.percent(20)
     assert 1.00 == db.percent(100)
+
+
+def test_mqtt_client_context_manager_support():
+    with db.MQTTClient() as mqtt_client:
+        assert mqtt_client

@@ -97,13 +97,13 @@ def on_message(_, subscriptions, message):
 
 
 class MQTTClient:
-    def __init__(self):
-        self.mqtt_client = None
+    def __init__(self, mqtt_client=paho.mqtt.client.Client()):
+        self.mqtt_client = mqtt_client
         self.subscriptions = {}
 
     def initialize(self, host='localhost'):
         logger.info('Initializing MQTT client')
-        self.mqtt_client = paho.mqtt.client.Client(userdata=self.subscriptions)
+        self.mqtt_client.user_data_set(self.subscriptions)
         self.mqtt_client.on_message = on_message
         self.mqtt_client.connect(host)
         logger.info('MQTT client initialized')
