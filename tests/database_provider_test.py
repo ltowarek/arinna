@@ -176,3 +176,30 @@ def test_mqtt_client_subscribes_to_topic():
 
     mqtt_client.disconnect()
     assert True is mutable_object['is_subscribed']
+
+
+def test_mqtt_client_receives_message_from_topic():
+    mqtt_client = db.MQTTClient()
+    mqtt_client.connect()
+    mutable_object = {'message_received': False}
+
+    def on_message(_, user_data, message):
+        status = True if message.payload == b'True' else False
+        user_data['message_received'] = status
+
+    mqtt_client.set_on_message(on_message)
+    mqtt_client.set_user_data(mutable_object)
+    mqtt_client.subscribe('sample_topic')
+    mqtt_client.publish('sample_topic', payload=True)
+
+    def wait_for_message(flag, mqtt):
+        while not flag['message_received']:
+            mqtt.loop()
+
+    t = threading.Thread(target=wait_for_message,
+                         args=(mutable_object, mqtt_client))
+    t.start()
+    t.join(timeout=5)
+
+    mqtt_client.disconnect()
+    assert True is mutable_object['message_received']

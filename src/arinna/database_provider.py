@@ -130,6 +130,13 @@ class MQTTClient:
         self.mqtt_client.subscribe(topic)
         logger.info('Subscribed to new topic')
 
+    def publish(self, topic, payload=None):
+        logger.info('Publishing message')
+        logger.info('Topic: {}'.format(topic))
+        logger.info('Payload: {}'.format(payload))
+        self.mqtt_client.publish(topic, payload=payload)
+        logger.info('Message published')
+
     def disconnect(self):
         logger.info('Disconnecting MQTT client')
         self.mqtt_client.disconnect()
