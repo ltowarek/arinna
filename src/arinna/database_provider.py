@@ -99,24 +99,34 @@ def on_message(_, subscriptions, message):
 class MQTTClient:
     def __init__(self, mqtt_client=paho.mqtt.client.Client()):
         self.mqtt_client = mqtt_client
-        self.subscriptions = {}
 
     def connect(self, host='localhost'):
         logger.info('Connecting MQTT client')
-        self.mqtt_client.user_data_set(self.subscriptions)
-        self.mqtt_client.on_message = on_message
+        logger.info('Host: {}'.format(host))
         self.mqtt_client.connect(host)
         logger.info('MQTT client connected')
 
-    def subscribe(self, topic, measurement, type_converter):
+    def set_on_message(self, callback):
+        logger.info('Setting on_message callback')
+        logger.info('Callback: {}'.format(callback))
+        self.mqtt_client.on_message = callback
+        logger.info('on_message callback set')
+
+    def set_on_subscribe(self, callback):
+        logger.info('Setting on_subscribe callback')
+        logger.info('Callback: {}'.format(callback))
+        self.mqtt_client.on_subscribe = callback
+        logger.info('on_subscribe callback set')
+
+    def set_user_data(self, data):
+        logger.info('Setting user data')
+        logger.info('Data: {}'.format(data))
+        self.mqtt_client.user_data_set(data)
+        logger.info('User data set')
+
+    def subscribe(self, topic):
         logger.info('Subscribing to new topic')
         logger.info('Topic: {}'.format(topic))
-        logger.info('Measurement: {}'.format(measurement))
-        logger.info('Type converter: {}'.format(type_converter))
-        self.subscriptions[topic] = {
-            'measurement': measurement,
-            'type': type_converter
-        }
         self.mqtt_client.subscribe(topic)
         logger.info('Subscribed to new topic')
 
@@ -124,6 +134,10 @@ class MQTTClient:
         logger.info('Disconnecting MQTT client')
         self.mqtt_client.disconnect()
         logger.info('MQTT client disconnected')
+
+    def loop(self):
+        logger.debug('Looping MQTT client once')
+        self.mqtt_client.loop()
 
     def loop_forever(self):
         logger.debug('Starting infinite MQTT client loop')
@@ -171,87 +185,105 @@ def main():
     settings = config.load()
     setup_logging(settings.logs_directory)
 
+    subscriptions = {
+        'inverter/response/grid_voltage': {
+            'measurement': 'grid_voltage',
+            'type': float
+        }, 'inverter/response/grid_frequency': {
+            'measurement': 'grid_frequency',
+            'type': float
+        }, 'inverter/response/ac_output_voltage': {
+            'measurement': 'ac_output_voltage',
+            'type': float
+        }, 'inverter/response/ac_output_frequency': {
+            'measurement': 'ac_output_frequency',
+            'type': float
+        }, 'inverter/response/ac_output_apparent_power': {
+            'measurement': 'ac_output_apparent_power',
+            'type': int
+        }, 'inverter/response/ac_output_active_power': {
+            'measurement': 'ac_output_active_power',
+            'type': int
+        }, 'inverter/response/output_load_percent': {
+            'measurement': 'output_load_percent',
+            'type': percent
+        }, 'inverter/response/bus_voltage': {
+            'measurement': 'bus_voltage',
+            'type': int
+        }, 'inverter/response/battery_voltage': {
+            'measurement': 'battery_voltage',
+            'type': float
+        }, 'inverter/response/battery_charging_current': {
+            'measurement': 'battery_charging_current',
+            'type': int
+        }, 'inverter/response/battery_capacity': {
+            'measurement': 'battery_capacity',
+            'type': percent
+        }, 'inverter/response/inverter_heat_sink_temperature': {
+            'measurement': 'inverter_heat_sink_temperature',
+            'type': int
+        }, 'inverter/response/pv_input_current_for_battery': {
+            'measurement': 'pv_input_current_for_battery',
+            'type': int
+        }, 'inverter/response/pv_input_voltage': {
+            'measurement': 'pv_input_voltage',
+            'type': float
+        }, 'inverter/response/battery_voltage_from_scc': {
+            'measurement': 'battery_voltage_from_scc',
+            'type': float
+        }, 'inverter/response/battery_discharge_current': {
+            'measurement': 'battery_discharge_current',
+            'type': int
+        }, 'inverter/response/is_sbu_priority_version_added': {
+            'measurement': 'is_sbu_priority_version_added',
+            'type': bool_from_string
+        }, 'inverter/response/is_configuration_changed': {
+            'measurement': 'is_configuration_changed',
+            'type': bool_from_string
+        }, 'inverter/response/is_scc_firmware_updated': {
+            'measurement': 'is_scc_firmware_updated',
+            'type': bool_from_string
+        }, 'inverter/response/is_load_on': {
+            'measurement': 'is_load_on',
+            'type': bool_from_string
+        }, 'inverter/response/is_battery_voltage_to_steady_while_charging': {
+            'measurement': 'is_battery_voltage_to_steady_while_charging',
+            'type': bool_from_string
+        }, 'inverter/response/is_charging_on': {
+            'measurement': 'is_charging_on',
+            'type': bool_from_string
+        }, 'inverter/response/is_scc_charging_on': {
+            'measurement': 'is_scc_charging_on',
+            'type': bool_from_string
+        }, 'inverter/response/is_ac_charging_on': {
+            'measurement': 'is_ac_charging_on',
+            'type': bool_from_string
+        }, 'inverter/response/battery_voltage_offset_for_fans_on': {
+            'measurement': 'battery_voltage_offset_for_fans_on',
+            'type': bool_from_string
+        }, 'inverter/response/eeprom_version': {
+            'measurement': 'eeprom_version',
+            'type': int
+        }, 'inverter/response/pv_charging_power': {
+            'measurement': 'pv_charging_power',
+            'type': int
+        }, 'inverter/response/is_charging_to_floating_enabled': {
+            'measurement': 'is_charging_to_floating_enabled',
+            'type': bool_from_string
+        }, 'inverter/response/is_switch_on': {
+            'measurement': 'is_switch_on',
+            'type': bool_from_string
+        }, 'inverter/response/is_dustproof_installed': {
+            'measurement': 'is_dustproof_installed',
+            'type': bool_from_string
+        }
+    }
+
     logger.info('MQTT loop started')
     try:
         with MQTTClient() as mqtt_client:
-            mqtt_client.subscribe('inverter/response/grid_voltage',
-                                  'grid_voltage',
-                                  float)
-            mqtt_client.subscribe('inverter/response/grid_frequency',
-                                  'grid_frequency',
-                                  float)
-            mqtt_client.subscribe('inverter/response/ac_output_voltage',
-                                  'ac_output_voltage', float)
-            mqtt_client.subscribe('inverter/response/ac_output_frequency',
-                                  'ac_output_frequency', float)
-            mqtt_client.subscribe('inverter/response/ac_output_apparent_power',
-                                  'ac_output_apparent_power', int)
-            mqtt_client.subscribe('inverter/response/ac_output_active_power',
-                                  'ac_output_active_power', int)
-            mqtt_client.subscribe('inverter/response/output_load_percent',
-                                  'output_load_percent', percent)
-            mqtt_client.subscribe('inverter/response/bus_voltage',
-                                  'bus_voltage', int)
-            mqtt_client.subscribe('inverter/response/battery_voltage',
-                                  'battery_voltage', float)
-            mqtt_client.subscribe('inverter/response/battery_charging_current',
-                                  'battery_charging_current', int)
-            mqtt_client.subscribe('inverter/response/battery_capacity',
-                                  'battery_capacity', percent)
-            mqtt_client.subscribe(
-                'inverter/response/inverter_heat_sink_temperature',
-                'inverter_heat_sink_temperature', int)
-            mqtt_client.subscribe(
-                'inverter/response/pv_input_current_for_battery',
-                'pv_input_current_for_battery', int)
-            mqtt_client.subscribe('inverter/response/pv_input_voltage',
-                                  'pv_input_voltage', float)
-            mqtt_client.subscribe('inverter/response/battery_voltage_from_scc',
-                                  'battery_voltage_from_scc', float)
-            mqtt_client.subscribe(
-                'inverter/response/battery_discharge_current',
-                'battery_discharge_current', int)
-            mqtt_client.subscribe(
-                'inverter/response/is_sbu_priority_version_added',
-                'is_sbu_priority_version_added', bool_from_string)
-            mqtt_client.subscribe(
-                'inverter/response/is_sbu_priority_version_added',
-                'is_sbu_priority_version_added', bool_from_string)
-            mqtt_client.subscribe('inverter/response/is_configuration_changed',
-                                  'is_configuration_changed', bool_from_string)
-            mqtt_client.subscribe('inverter/response/is_scc_firmware_updated',
-                                  'is_scc_firmware_updated', bool_from_string)
-            mqtt_client.subscribe('inverter/response/is_load_on', 'is_load_on',
-                                  bool_from_string)
-            mqtt_client.subscribe(
-                'inverter/response/'
-                'is_battery_voltage_to_steady_while_charging',
-                'is_battery_voltage_to_steady_while_charging',
-                bool_from_string)
-            mqtt_client.subscribe('inverter/response/is_charging_on',
-                                  'is_charging_on',
-                                  bool_from_string)
-            mqtt_client.subscribe('inverter/response/is_scc_charging_on',
-                                  'is_scc_charging_on', bool_from_string)
-            mqtt_client.subscribe('inverter/response/is_ac_charging_on',
-                                  'is_ac_charging_on', bool_from_string)
-            mqtt_client.subscribe(
-                'inverter/response/battery_voltage_offset_for_fans_on',
-                'battery_voltage_offset_for_fans_on', int)
-            mqtt_client.subscribe('inverter/response/eeprom_version',
-                                  'eeprom_version',
-                                  int)
-            mqtt_client.subscribe('inverter/response/pv_charging_power',
-                                  'pv_charging_power', int)
-            mqtt_client.subscribe(
-                'inverter/response/is_charging_to_floating_enabled',
-                'is_charging_to_floating_enabled', bool_from_string)
-            mqtt_client.subscribe('inverter/response/is_switch_on',
-                                  'is_switch_on',
-                                  bool_from_string)
-            mqtt_client.subscribe('inverter/response/is_dustproof_installed',
-                                  'is_dustproof_installed', bool_from_string)
-
+            mqtt_client.set_on_message(on_message)
+            mqtt_client.set_user_data(subscriptions)
             mqtt_client.loop_forever()
     except KeyboardInterrupt:
         logger.info('MQTT loop stopped by user')

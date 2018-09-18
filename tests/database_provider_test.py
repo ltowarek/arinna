@@ -151,3 +151,28 @@ def test_mqtt_client_stops_looping_when_disconnected():
     mqtt_client.disconnect()
     t.join(timeout=5)
     assert False is t.is_alive()
+
+
+def test_mqtt_client_subscribes_to_topic():
+    mqtt_client = db.MQTTClient()
+    mqtt_client.connect()
+    mutable_object = {'is_subscribed': False}
+
+    def on_subscribe(_, user_data, *args):
+        user_data['is_subscribed'] = True
+
+    mqtt_client.set_on_subscribe(on_subscribe)
+    mqtt_client.set_user_data(mutable_object)
+    mqtt_client.subscribe('sample_topic')
+
+    def wait_for_subscription(flag, mqtt):
+        while not flag['is_subscribed']:
+            mqtt.loop()
+
+    t = threading.Thread(target=wait_for_subscription,
+                         args=(mutable_object, mqtt_client))
+    t.start()
+    t.join(timeout=5)
+
+    mqtt_client.disconnect()
+    assert True is mutable_object['is_subscribed']
