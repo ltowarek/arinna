@@ -97,7 +97,7 @@ def on_message(_, subscriptions, message):
 
 
 class MQTTClient:
-    def __init__(self, mqtt_client=paho.mqtt.client.Client()):
+    def __init__(self, mqtt_client):
         self.mqtt_client = mqtt_client
 
     def connect(self, host='localhost'):
@@ -145,6 +145,16 @@ class MQTTClient:
     def loop(self):
         logger.debug('Looping MQTT client once')
         self.mqtt_client.loop()
+
+    def loop_start(self):
+        logger.debug('Starting MQTT client loop')
+        self.mqtt_client.loop_start()
+        logger.debug('MQTT client loop started')
+
+    def loop_stop(self):
+        logger.debug('Stopping MQTT client loop')
+        self.mqtt_client.loop_stop()
+        logger.debug('MQTT client loop stopped')
 
     def loop_forever(self):
         logger.debug('Starting infinite MQTT client loop')
@@ -288,7 +298,7 @@ def main():
 
     logger.info('MQTT loop started')
     try:
-        with MQTTClient() as mqtt_client:
+        with MQTTClient(paho.mqtt.client.Client()) as mqtt_client:
             mqtt_client.set_on_message(on_message)
             mqtt_client.set_user_data(subscriptions)
             mqtt_client.loop_forever()

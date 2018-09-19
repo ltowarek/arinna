@@ -5,6 +5,7 @@ import statistics
 import threading
 import influxdb
 from tests.fakes.database import get_points_with_interval
+import paho.mqtt.client
 
 import pytest
 
@@ -137,13 +138,28 @@ def test_percent():
     assert 1.00 == db.percent(100)
 
 
+@pytest.fixture
+def mqtt_client():
+    mqtt_client = db.MQTTClient(paho.mqtt.client.Client())
+    mqtt_client.connect()
+    yield mqtt_client
+    mqtt_client.disconnect()
+
+
+@pytest.fixture
+def mqtt_client_with_loop(mqtt_client):
+    mqtt_client.loop_start()
+    yield mqtt_client
+    mqtt_client.loop_stop()
+
+
 def test_mqtt_client_context_manager_support():
-    with db.MQTTClient() as mqtt_client:
+    with db.MQTTClient(paho.mqtt.client.Client()) as mqtt_client:
         assert mqtt_client
 
 
 def test_mqtt_client_stops_looping_when_disconnected():
-    mqtt_client = db.MQTTClient()
+    mqtt_client = db.MQTTClient(paho.mqtt.client.Client())
     mqtt_client.connect()
     t = threading.Thread(target=db.MQTTClient.loop_forever,
                          args=(mqtt_client,))
@@ -153,53 +169,47 @@ def test_mqtt_client_stops_looping_when_disconnected():
     assert False is t.is_alive()
 
 
-def test_mqtt_client_subscribes_to_topic():
-    mqtt_client = db.MQTTClient()
-    mqtt_client.connect()
+def test_mqtt_client_subscribes_to_topic(mqtt_client_with_loop):
     mutable_object = {'is_subscribed': False}
 
     def on_subscribe(_, user_data, *args):
         user_data['is_subscribed'] = True
 
-    mqtt_client.set_on_subscribe(on_subscribe)
-    mqtt_client.set_user_data(mutable_object)
-    mqtt_client.subscribe('sample_topic')
+    mqtt_client_with_loop.set_on_subscribe(on_subscribe)
+    mqtt_client_with_loop.set_user_data(mutable_object)
+    mqtt_client_with_loop.subscribe('sample_topic')
 
-    def wait_for_subscription(flag, mqtt):
+    def wait_for_subscription(flag):
         while not flag['is_subscribed']:
-            mqtt.loop()
+            pass
 
     t = threading.Thread(target=wait_for_subscription,
-                         args=(mutable_object, mqtt_client))
+                         args=(mutable_object,))
     t.start()
     t.join(timeout=5)
 
-    mqtt_client.disconnect()
     assert True is mutable_object['is_subscribed']
 
 
-def test_mqtt_client_receives_message_from_topic():
-    mqtt_client = db.MQTTClient()
-    mqtt_client.connect()
+def test_mqtt_client_receives_message_from_topic(mqtt_client_with_loop):
     mutable_object = {'message_received': False}
 
     def on_message(_, user_data, message):
         status = True if message.payload == b'True' else False
         user_data['message_received'] = status
 
-    mqtt_client.set_on_message(on_message)
-    mqtt_client.set_user_data(mutable_object)
-    mqtt_client.subscribe('sample_topic')
-    mqtt_client.publish('sample_topic', payload=True)
+    mqtt_client_with_loop.set_on_message(on_message)
+    mqtt_client_with_loop.set_user_data(mutable_object)
+    mqtt_client_with_loop.subscribe('sample_topic')
+    mqtt_client_with_loop.publish('sample_topic', payload=True)
 
-    def wait_for_message(flag, mqtt):
+    def wait_for_message(flag):
         while not flag['message_received']:
-            mqtt.loop()
+            pass
 
     t = threading.Thread(target=wait_for_message,
-                         args=(mutable_object, mqtt_client))
+                         args=(mutable_object,))
     t.start()
     t.join(timeout=5)
 
-    mqtt_client.disconnect()
     assert True is mutable_object['message_received']

@@ -1,53 +1,44 @@
 #!/usr/bin/env python3
 
 import arinna.inverter_provider as ip
-import paho.mqtt.client
 from tests.fakes.serial import FakeSerial
+import arinna.database_provider as db
+import time
+import paho.mqtt.client
 
 
-def test_on_message_sends_qpigs_to_inverter():
+def test_mqtt_subscriber_sends_qpigs_when_request_is_received():
     fake_serial = FakeSerial()
-    serial_adapter = ip.InverterSerialAdapter(fake_serial)
-    message = paho.mqtt.client.MQTTMessage()
-
-    ip.on_message(None, serial_adapter, message)
-
-    assert fake_serial.last_written_data == ip.QPIGS
-
-
-class MQTTSpy:
-    def __init__(self):
-        self._publish_messages = []
-
-    @property
-    def publish_messages(self):
-        return self._publish_messages
-
-    def publish(self, topic, payload):
-        self._publish_messages.append({topic: payload})
+    with db.MQTTClient(paho.mqtt.client.Client()) as mqtt_client:
+        serial_adapter = ip.InverterSerialAdapter(fake_serial)
+        subscriber = ip.InverterMQTTSubscriber(serial_adapter, mqtt_client)
+        subscriber.subscribe_request()
+        mqtt_client.publish('inverter/request')
+        timeout = time.time() + 1
+        while timeout > time.time():
+            mqtt_client.loop()
+    assert ip.QPIGS == fake_serial.last_written_data
 
 
-def test_publish_responses_is_a_noop_given_no_responses_are_passed():
-    mqtt_spy = MQTTSpy()
-    responses = {}
+def test_mqtt_publisher_publishes_response():
+    with db.MQTTClient(paho.mqtt.client.Client()) as mqtt_client:
+        def on_message(_, user_data, message):
+            user_data['payload'] = message.payload.decode()
+        mqtt_client.set_on_message(on_message)
+        mutable_object = {'payload': None}
+        mqtt_client.set_user_data(mutable_object)
+        measurement = 'sample_measurement'
+        mqtt_client.subscribe('inverter/response/' + measurement)
 
-    ip.publish_response(responses, mqtt_spy)
+        response = {measurement: 'value'}
+        mqtt_adapter = ip.InverterMQTTPublisher(mqtt_client)
+        mqtt_adapter.publish_response(response)
 
-    assert mqtt_spy.publish_messages == []
+        timeout = time.time() + 1
+        while timeout > time.time():
+            mqtt_client.loop()
 
-
-def test_publish_responses_sends_responses_using_mqtt_client():
-    mqtt_spy = MQTTSpy()
-    responses = {
-        'topic_a': 'value_a',
-        'topic_b': 'value_b'
-    }
-
-    ip.publish_response(responses, mqtt_spy)
-
-    expected_messages = [{'inverter/response/' + k: v} for k, v in
-                         responses.items()]
-    assert mqtt_spy.publish_messages == expected_messages
+        assert response[measurement] == mutable_object['payload']
 
 
 def test_serial_adapter_sends_qpigs_command():

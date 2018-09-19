@@ -8,6 +8,7 @@ import serial
 import sys
 import arinna.config as config
 import arinna.database_provider as db
+import paho.mqtt.client
 
 logger = logging.getLogger(__name__)
 
@@ -105,20 +106,35 @@ class InverterSerialAdapter:
         return response
 
 
-def publish_response(response, client):
-    for key, value in response.items():
-        logger.info('Sending response')
-        topic = 'inverter/response/' + key
-        logger.info('Topic: {}'.format(topic))
-        logger.info('Payload: {}'.format(value))
-        client.publish(topic, value)
-
-
 def on_message(_, serial_adapter, message):
     logger.info('Message received')
     logger.info('Payload: {}'.format(message.payload))
     logger.info('Topic: {}'.format(message.topic))
     serial_adapter.send_command(QPIGS)
+
+
+class InverterMQTTSubscriber:
+    def __init__(self, serial_adapter, mqtt_client):
+        self.serial_adapter = serial_adapter
+        self.mqtt_client = mqtt_client
+
+    def subscribe_request(self):
+        self.mqtt_client.set_user_data(self.serial_adapter)
+        self.mqtt_client.set_on_message(on_message)
+        self.mqtt_client.subscribe('inverter/request')
+
+
+class InverterMQTTPublisher:
+    def __init__(self, mqtt_client):
+        self.mqtt_client = mqtt_client
+
+    def publish_response(self, response):
+        for key, value in response.items():
+            logger.info('Sending response')
+            topic = 'inverter/response/' + key
+            logger.info('Topic: {}'.format(topic))
+            logger.info('Payload: {}'.format(value))
+            self.mqtt_client.publish(topic, value)
 
 
 def setup_logging(logs_directory):
@@ -145,17 +161,20 @@ def main():
     settings = config.load()
     setup_logging(settings.logs_directory)
 
+    logger.info('Starting MQTT loop')
+    mqtt_client = db.MQTTClient(paho.mqtt.client.Client())
+    mqtt_client.connect()
+    mqtt_client.loop_start()
+
     try:
-        logger.info('Starting MQTT loop')
         logger.info(
             'Starting listening on port: {}'.format(settings.serial_port))
-        with db.MQTTClient() as mqtt_client, \
-                serial.Serial(settings.serial_port, 2400) as serial_port:
+        with serial.Serial(settings.serial_port, 2400) as serial_port:
             serial_adapter = InverterSerialAdapter(serial_port)
-
-            mqtt_client.set_user_data(serial_adapter)
-            mqtt_client.set_on_message(on_message)
-            mqtt_client.subscribe('inverter/request')
+            mqtt_subscriber = InverterMQTTSubscriber(serial_adapter,
+                                                     mqtt_client)
+            mqtt_subscriber.subscribe_request()
+            mqtt_publisher = InverterMQTTPublisher(mqtt_client)
 
             while True:
                 raw_response = serial_adapter.receive_response()
@@ -167,11 +186,14 @@ def main():
                 parsed_response = serial_adapter.parse_response(
                     raw_response)
 
-                publish_response(parsed_response, mqtt_client)
+                mqtt_publisher.publish_response(parsed_response)
     except KeyboardInterrupt:
         logger.info('Listening loop stopped by user')
     except Exception:
         logger.exception('Unknown exception occurred')
+    finally:
+        mqtt_client.loop_stop()
+        mqtt_client.disconnect()
     logger.info('Listening loop stopped')
 
     return 0
