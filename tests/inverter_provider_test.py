@@ -2,41 +2,17 @@
 
 import arinna.inverter_provider as ip
 import paho.mqtt.client
-import io
-
-
-def test_is_valid_response_returns_false_given_ack_is_passed():
-    assert ip.is_valid_response(b'(ACK9 \r') is False
-
-
-def test_is_valid_response_returns_false_given_nak_is_passed():
-    assert ip.is_valid_response(b'(NAKss\r') is False
-
-
-def test_is_valid_response_returns_true_given_valid_response_is_passed():
-    assert ip.is_valid_response(b'(NAKss\r') is False
-
-
-class SerialSpy(io.RawIOBase):
-    def __init__(self):
-        super().__init__()
-        self._write_message = None
-
-    @property
-    def write_message(self):
-        return self._write_message
-
-    def write(self, message):
-        self._write_message = message
+from tests.fakes.serial import FakeSerial
 
 
 def test_on_message_sends_qpigs_to_inverter():
-    serial_spy = SerialSpy()
+    fake_serial = FakeSerial()
+    serial_adapter = ip.InverterSerialAdapter(fake_serial)
     message = paho.mqtt.client.MQTTMessage()
 
-    ip.on_message(None, serial_spy, message)
+    ip.on_message(None, serial_adapter, message)
 
-    assert serial_spy.write_message == ip.qpigs
+    assert fake_serial.last_written_data == ip.QPIGS
 
 
 class MQTTSpy:
@@ -72,6 +48,45 @@ def test_publish_responses_sends_responses_using_mqtt_client():
     expected_messages = [{'inverter/response/' + k: v} for k, v in
                          responses.items()]
     assert mqtt_spy.publish_messages == expected_messages
+
+
+def test_serial_adapter_sends_qpigs_command():
+    fake_serial = FakeSerial()
+    command = ip.QPIGS
+    serial_adapter = ip.InverterSerialAdapter(fake_serial)
+    serial_adapter.send_command(command)
+    assert command == fake_serial.last_written_data
+
+
+def test_serial_adapter_receives_response_until_cr():
+    fake_serial = FakeSerial()
+    expected_response = b'sample_response'
+    fake_serial.response = expected_response + b'\r'
+    serial_adapter = ip.InverterSerialAdapter(fake_serial)
+    actual_response = serial_adapter.receive_response()
+    assert expected_response == actual_response
+
+
+def test_serial_adapter_receives_two_responses_from_single_input():
+    fake_serial = FakeSerial()
+    expected_responses = [b'input1', b'input2']
+    fake_serial.response = b'\r'.join(expected_responses) + b'\r'
+    serial_adapter = ip.InverterSerialAdapter(fake_serial)
+    for expected_response in expected_responses:
+        actual_response = serial_adapter.receive_response()
+        assert expected_response == actual_response
+
+
+def test_is_valid_response_returns_false_given_ack_is_passed():
+    assert ip.InverterSerialAdapter.is_valid_response(b'(ACK9 \r') is False
+
+
+def test_is_valid_response_returns_false_given_nak_is_passed():
+    assert ip.InverterSerialAdapter.is_valid_response(b'(NAKss\r') is False
+
+
+def test_is_valid_response_returns_true_given_valid_response_is_passed():
+    assert ip.InverterSerialAdapter.is_valid_response(b'(NAKss\r') is False
 
 
 class QPIGSResponseBuilder:
@@ -156,7 +171,7 @@ def verify_parsed_response(key, value):
     builder = QPIGSResponseBuilder()
     builder.set_tokens(**{key: value})
     raw_response = builder.prepare_response()
-    parsed_response = ip.parse_response(raw_response)
+    parsed_response = ip.InverterSerialAdapter.parse_response(raw_response)
     assert value == parsed_response[key]
 
 

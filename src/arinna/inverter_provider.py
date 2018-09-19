@@ -11,79 +11,98 @@ import arinna.database_provider as db
 
 logger = logging.getLogger(__name__)
 
-ResponseToken = namedtuple('ResponseToken', ['name', 'start', 'end'])
-
-tokens = [
-    ResponseToken('grid_voltage', 1, 6),
-    ResponseToken('grid_frequency', 7, 11),
-    ResponseToken('ac_output_voltage', 12, 17),
-    ResponseToken('ac_output_frequency', 18, 22),
-    ResponseToken('ac_output_apparent_power', 23, 27),
-    ResponseToken('ac_output_active_power', 28, 32),
-    ResponseToken('output_load_percent', 33, 36),
-    ResponseToken('bus_voltage', 37, 40),
-    ResponseToken('battery_voltage', 41, 46),
-    ResponseToken('battery_charging_current', 47, 50),
-    ResponseToken('battery_capacity', 51, 54),
-    ResponseToken('inverter_heat_sink_temperature', 55, 59),
-    ResponseToken('pv_input_current_for_battery', 60, 64),
-    ResponseToken('pv_input_voltage', 65, 70),
-    ResponseToken('battery_voltage_from_scc', 71, 76),
-    ResponseToken('battery_discharge_current', 77, 82),
-    ResponseToken('is_sbu_priority_version_added', 83, 84),
-    ResponseToken('is_configuration_changed', 84, 85),
-    ResponseToken('is_scc_firmware_updated', 85, 86),
-    ResponseToken('is_load_on', 86, 87),
-    ResponseToken('is_battery_voltage_to_steady_while_charging', 87, 88),
-    ResponseToken('is_charging_on', 88, 89),
-    ResponseToken('is_scc_charging_on', 89, 90),
-    ResponseToken('is_ac_charging_on', 90, 91),
-    ResponseToken('battery_voltage_offset_for_fans_on', 92, 94),
-    ResponseToken('eeprom_version', 95, 97),
-    ResponseToken('pv_charging_power', 98, 103),
-    ResponseToken('is_charging_to_floating_enabled', 104, 105),
-    ResponseToken('is_switch_on', 105, 106),
-    ResponseToken('is_dustproof_installed', 106, 107)
-]
-
-qpigs = bytes.fromhex('51 50 49 47 53 b7 a9 0d')
+QPIGS = bytes.fromhex('51 50 49 47 53 b7 a9 0d')
 
 
-def parse_response(raw_response):
-    response = {}
-    current_byte_id = 0
-    current_token_id = 0
-    current_token_value = ''
+class InverterSerialAdapter:
+    def __init__(self, serial_port):
+        self.serial_port = serial_port
 
-    logger.info('Parsing response')
-    for b in raw_response:
-        c = chr(b)
-        if c == '(':
-            logger.debug('Resetting current byte and token ids')
-            current_byte_id = 0
-            current_token_id = 0
-        else:
-            if current_token_id < len(tokens) and \
-                    current_byte_id == tokens[current_token_id].end:
-                logger.debug('Updating response')
-                key = tokens[current_token_id].name
-                value = current_token_value
-                logger.debug('Key: {}'.format(key))
-                logger.debug('Value: {}'.format(value))
-                response[key] = value
-                current_token_id += 1
-                logger.debug('Response updated')
-                logger.debug(
-                    'Increasing token id to: {}'.format(current_token_id))
-            if current_token_id < len(tokens) and \
-                    current_byte_id == tokens[current_token_id].start:
-                logging.debug('Resetting current token value')
-                current_token_value = ''
-            current_token_value = current_token_value + c
-        current_byte_id += 1
-    logger.info('Response parsed')
+    def send_command(self, command):
+        self.serial_port.write(command)
 
-    return response
+    def receive_response(self):
+        raw_response = self.serial_port.read_until(b'\r')
+        logger.info('Raw response: {}'.format(raw_response))
+        return raw_response
+
+    @staticmethod
+    def is_valid_response(response):
+        return response != b'(ACK9 \r' and response != b'(NAKss\r'
+
+    @staticmethod
+    def parse_response(raw_response):
+        ResponseToken = namedtuple('ResponseToken', ['name', 'start', 'end'])
+
+        tokens = [
+            ResponseToken('grid_voltage', 1, 6),
+            ResponseToken('grid_frequency', 7, 11),
+            ResponseToken('ac_output_voltage', 12, 17),
+            ResponseToken('ac_output_frequency', 18, 22),
+            ResponseToken('ac_output_apparent_power', 23, 27),
+            ResponseToken('ac_output_active_power', 28, 32),
+            ResponseToken('output_load_percent', 33, 36),
+            ResponseToken('bus_voltage', 37, 40),
+            ResponseToken('battery_voltage', 41, 46),
+            ResponseToken('battery_charging_current', 47, 50),
+            ResponseToken('battery_capacity', 51, 54),
+            ResponseToken('inverter_heat_sink_temperature', 55, 59),
+            ResponseToken('pv_input_current_for_battery', 60, 64),
+            ResponseToken('pv_input_voltage', 65, 70),
+            ResponseToken('battery_voltage_from_scc', 71, 76),
+            ResponseToken('battery_discharge_current', 77, 82),
+            ResponseToken('is_sbu_priority_version_added', 83, 84),
+            ResponseToken('is_configuration_changed', 84, 85),
+            ResponseToken('is_scc_firmware_updated', 85, 86),
+            ResponseToken('is_load_on', 86, 87),
+            ResponseToken('is_battery_voltage_to_steady_while_charging', 87,
+                          88),
+            ResponseToken('is_charging_on', 88, 89),
+            ResponseToken('is_scc_charging_on', 89, 90),
+            ResponseToken('is_ac_charging_on', 90, 91),
+            ResponseToken('battery_voltage_offset_for_fans_on', 92, 94),
+            ResponseToken('eeprom_version', 95, 97),
+            ResponseToken('pv_charging_power', 98, 103),
+            ResponseToken('is_charging_to_floating_enabled', 104, 105),
+            ResponseToken('is_switch_on', 105, 106),
+            ResponseToken('is_dustproof_installed', 106, 107)
+        ]
+
+        response = {}
+        current_byte_id = 0
+        current_token_id = 0
+        current_token_value = ''
+
+        logger.info('Parsing response')
+        for b in raw_response:
+            c = chr(b)
+            if c == '(':
+                logger.debug('Resetting current byte and token ids')
+                current_byte_id = 0
+                current_token_id = 0
+            else:
+                if current_token_id < len(tokens) and \
+                        current_byte_id == tokens[current_token_id].end:
+                    logger.debug('Updating response')
+                    key = tokens[current_token_id].name
+                    value = current_token_value
+                    logger.debug('Key: {}'.format(key))
+                    logger.debug('Value: {}'.format(value))
+                    response[key] = value
+                    current_token_id += 1
+                    logger.debug('Response updated')
+                    logger.debug(
+                        'Increasing token id to: {}'.format(current_token_id))
+                if current_token_id < len(tokens) and \
+                        current_byte_id == tokens[current_token_id].start:
+                    logging.debug('Resetting current token value')
+                    current_token_value = ''
+                current_token_value = current_token_value + c
+            current_byte_id += 1
+        logger.info('Response parsed')
+
+        logger.debug('Parsed response: {}'.format(response))
+        return response
 
 
 def publish_response(response, client):
@@ -95,15 +114,11 @@ def publish_response(response, client):
         client.publish(topic, value)
 
 
-def is_valid_response(response):
-    return response != b'(ACK9 \r' and response != b'(NAKss\r'
-
-
-def on_message(_, serial_port, message):
+def on_message(_, serial_adapter, message):
     logger.info('Message received')
     logger.info('Payload: {}'.format(message.payload))
     logger.info('Topic: {}'.format(message.topic))
-    serial_port.write(qpigs)
+    serial_adapter.send_command(QPIGS)
 
 
 def setup_logging(logs_directory):
@@ -136,20 +151,21 @@ def main():
             'Starting listening on port: {}'.format(settings.serial_port))
         with db.MQTTClient() as mqtt_client, \
                 serial.Serial(settings.serial_port, 2400) as serial_port:
-            mqtt_client.set_user_data(serial_port)
+            serial_adapter = InverterSerialAdapter(serial_port)
+
+            mqtt_client.set_user_data(serial_adapter)
             mqtt_client.set_on_message(on_message)
             mqtt_client.subscribe('inverter/request')
 
             while True:
-                raw_response = serial_port.read_until(b'\r')
-                logger.info('Raw response: {}'.format(raw_response))
+                raw_response = serial_adapter.receive_response()
 
-                if not is_valid_response(raw_response):
+                if not serial_adapter.is_valid_response(raw_response):
                     logger.warning('Invalid response')
                     continue
 
-                parsed_response = parse_response(raw_response)
-                logger.debug('Parsed response: {}'.format(parsed_response))
+                parsed_response = serial_adapter.parse_response(
+                    raw_response)
 
                 publish_response(parsed_response, mqtt_client)
     except KeyboardInterrupt:
