@@ -1,6 +1,5 @@
 #!/usr/bin/env python3
 
-import paho.mqtt.client
 from collections import namedtuple
 import logging
 import logging.handlers
@@ -8,6 +7,7 @@ import os
 import serial
 import sys
 import arinna.config as config
+import arinna.database_provider as db
 
 logger = logging.getLogger(__name__)
 
@@ -46,7 +46,6 @@ tokens = [
     ResponseToken('is_dustproof_installed', 106, 107)
 ]
 
-
 qpigs = bytes.fromhex('51 50 49 47 53 b7 a9 0d')
 
 
@@ -65,7 +64,7 @@ def parse_response(raw_response):
             current_token_id = 0
         else:
             if current_token_id < len(tokens) and \
-               current_byte_id == tokens[current_token_id].end:
+                    current_byte_id == tokens[current_token_id].end:
                 logger.debug('Updating response')
                 key = tokens[current_token_id].name
                 value = current_token_value
@@ -77,7 +76,7 @@ def parse_response(raw_response):
                 logger.debug(
                     'Increasing token id to: {}'.format(current_token_id))
             if current_token_id < len(tokens) and \
-               current_byte_id == tokens[current_token_id].start:
+                    current_byte_id == tokens[current_token_id].start:
                 logging.debug('Resetting current token value')
                 current_token_value = ''
             current_token_value = current_token_value + c
@@ -131,22 +130,18 @@ def main():
     settings = config.load()
     setup_logging(settings.logs_directory)
 
-    serial_port = serial.Serial(settings.serial_port, 2400)
-
-    client = paho.mqtt.client.Client(userdata=serial_port)
-    client.on_message = on_message
-    client.connect('localhost')
-    client.subscribe('inverter/request')
-
     try:
         logger.info('Starting MQTT loop')
-        client.loop_start()
-
         logger.info(
             'Starting listening on port: {}'.format(settings.serial_port))
-        while True:
-            with serial_port as s:
-                raw_response = s.read_until(b'\r')
+        with db.MQTTClient() as mqtt_client, \
+                serial.Serial(settings.serial_port, 2400) as serial_port:
+            mqtt_client.set_user_data(serial_port)
+            mqtt_client.set_on_message(on_message)
+            mqtt_client.subscribe('inverter/request')
+
+            while True:
+                raw_response = serial_port.read_until(b'\r')
                 logger.info('Raw response: {}'.format(raw_response))
 
                 if not is_valid_response(raw_response):
@@ -156,14 +151,11 @@ def main():
                 parsed_response = parse_response(raw_response)
                 logger.debug('Parsed response: {}'.format(parsed_response))
 
-                publish_response(parsed_response, client)
+                publish_response(parsed_response, mqtt_client)
     except KeyboardInterrupt:
         logger.info('Listening loop stopped by user')
     except Exception:
         logger.exception('Unknown exception occurred')
-    finally:
-        client.loop_stop()
-        client.disconnect()
     logger.info('Listening loop stopped')
 
     return 0
