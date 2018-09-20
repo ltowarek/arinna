@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 
 import arinna.database_provider as db
+import asyncio
 import statistics
 import threading
 import influxdb
@@ -179,14 +180,13 @@ def test_mqtt_client_subscribes_to_topic(mqtt_client_with_loop):
     mqtt_client_with_loop.set_user_data(mutable_object)
     mqtt_client_with_loop.subscribe('sample_topic')
 
-    def wait_for_subscription(flag):
+    async def wait_for_result(flag):
         while not flag['is_subscribed']:
             pass
 
-    t = threading.Thread(target=wait_for_subscription,
-                         args=(mutable_object,))
-    t.start()
-    t.join(timeout=5)
+    loop = asyncio.get_event_loop()
+    loop.run_until_complete(wait_for_result(mutable_object))
+    loop.stop()
 
     assert True is mutable_object['is_subscribed']
 
@@ -203,13 +203,12 @@ def test_mqtt_client_receives_message_from_topic(mqtt_client_with_loop):
     mqtt_client_with_loop.subscribe('sample_topic')
     mqtt_client_with_loop.publish('sample_topic', payload=True)
 
-    def wait_for_message(flag):
+    async def wait_for_result(flag):
         while not flag['message_received']:
             pass
 
-    t = threading.Thread(target=wait_for_message,
-                         args=(mutable_object,))
-    t.start()
-    t.join(timeout=5)
+    loop = asyncio.get_event_loop()
+    loop.run_until_complete(wait_for_result(mutable_object))
+    loop.stop()
 
     assert True is mutable_object['message_received']

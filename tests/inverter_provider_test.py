@@ -3,8 +3,8 @@
 import arinna.inverter_provider as ip
 from tests.fakes.serial import FakeSerial
 import arinna.database_provider as db
-import time
 import paho.mqtt.client
+import asyncio
 
 
 def test_mqtt_subscriber_sends_qpigs_when_request_is_received():
@@ -14,9 +14,15 @@ def test_mqtt_subscriber_sends_qpigs_when_request_is_received():
         subscriber = ip.InverterMQTTSubscriber(serial_adapter, mqtt_client)
         subscriber.subscribe_request()
         mqtt_client.publish('inverter/request')
-        timeout = time.time() + 1
-        while timeout > time.time():
-            mqtt_client.loop()
+
+        async def wait_for_result(client, serial_port):
+            while not serial_port.last_written_data:
+                client.loop()
+
+        loop = asyncio.get_event_loop()
+        loop.run_until_complete(wait_for_result(mqtt_client, fake_serial))
+        loop.stop()
+
     assert ip.QPIGS == fake_serial.last_written_data
 
 
@@ -34,9 +40,13 @@ def test_mqtt_publisher_publishes_response():
         mqtt_adapter = ip.InverterMQTTPublisher(mqtt_client)
         mqtt_adapter.publish_response(response)
 
-        timeout = time.time() + 1
-        while timeout > time.time():
-            mqtt_client.loop()
+        async def wait_for_result(client, user_data):
+            while not user_data['payload']:
+                client.loop()
+
+        loop = asyncio.get_event_loop()
+        loop.run_until_complete(wait_for_result(mqtt_client, mutable_object))
+        loop.stop()
 
         assert response[measurement] == mutable_object['payload']
 
