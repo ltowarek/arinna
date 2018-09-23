@@ -1,36 +1,15 @@
 #!/usr/bin/env python3
 
-import paho.mqtt.client
+import arinna.inverter_provider as inverter_provider
 import logging
 import logging.handlers
 import os
 import sys
 import arinna.config as config
+import arinna.database_provider as database_provider
+import paho.mqtt.client
 
 logger = logging.getLogger(__name__)
-
-
-class Publisher:
-    def __init__(self):
-        self.mqtt_client = None
-
-    def initialize(self, host='localhost'):
-        logger.info('Initializing MQTT client')
-        self.mqtt_client = paho.mqtt.client.Client()
-        self.mqtt_client.connect(host)
-        logger.info('MQTT client initialized')
-
-    def close(self):
-        logger.info('Disconnecting MQTT client')
-        self.mqtt_client.disconnect()
-        logger.info('MQTT client disconnected')
-
-    def publish(self, topic, payload):
-        logger.info('Publishing message')
-        logger.info('Topic: {}'.format(topic))
-        logger.info('Payload: {}'.format(payload))
-        self.mqtt_client.publish(topic, payload)
-        logger.info('Message published')
 
 
 def setup_logging(logs_directory):
@@ -57,10 +36,10 @@ def main():
     settings = config.load()
     setup_logging(settings.logs_directory)
 
-    publisher = Publisher()
-    publisher.initialize()
-    publisher.publish('inverter/request', 'QPIGS')
-    publisher.close()
+    with database_provider.MQTTClient(
+            paho.mqtt.client.Client()) as mqtt_client:
+        publisher = inverter_provider.InverterMQTTPublisher(mqtt_client)
+        publisher.publish_request('QPIGS')
 
     return 0
 

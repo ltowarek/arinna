@@ -136,6 +136,14 @@ class InverterMQTTPublisher:
             logger.info('Payload: {}'.format(value))
             self.mqtt_client.publish(topic, value)
 
+    def publish_request(self, request):
+        logger.info('Publishing message')
+        topic = 'inverter/request'
+        logger.info('Topic: {}'.format(topic))
+        logger.info('Payload: {}'.format(request))
+        self.mqtt_client.publish(topic, request)
+        logger.info('Message published')
+
 
 def setup_logging(logs_directory):
     logger.setLevel(logging.DEBUG)
