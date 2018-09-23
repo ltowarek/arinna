@@ -3,7 +3,7 @@
 import logging
 import arinna.log as log
 import sys
-import arinna.database_provider as db
+from arinna.database_client import DatabaseClient
 
 logger = logging.getLogger(__name__)
 
@@ -63,8 +63,8 @@ def main():
     log.setup_logging()
 
     try:
-        with db.DatabaseClient(db_name='load') as load_database, \
-                db.DatabaseClient() as inverter_database:
+        with DatabaseClient(db_name='load') as load_database, \
+                DatabaseClient() as inverter_database:
             load = Load(load_database)
             load_balancer = LoadBalancer(inverter_database, load)
             load_balancer.balance()
