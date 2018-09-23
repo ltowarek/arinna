@@ -6,7 +6,6 @@ import statistics
 import threading
 import influxdb
 from tests.fakes.database import get_points_with_interval
-import paho.mqtt.client
 
 import pytest
 
@@ -141,7 +140,7 @@ def test_percent():
 
 @pytest.fixture
 def mqtt_client():
-    mqtt_client = db.MQTTClient(paho.mqtt.client.Client())
+    mqtt_client = db.MQTTClient()
     mqtt_client.connect()
     yield mqtt_client
     mqtt_client.disconnect()
@@ -155,12 +154,12 @@ def mqtt_client_with_loop(mqtt_client):
 
 
 def test_mqtt_client_context_manager_support():
-    with db.MQTTClient(paho.mqtt.client.Client()) as mqtt_client:
+    with db.MQTTClient() as mqtt_client:
         assert mqtt_client
 
 
 def test_mqtt_client_stops_looping_when_disconnected():
-    mqtt_client = db.MQTTClient(paho.mqtt.client.Client())
+    mqtt_client = db.MQTTClient()
     mqtt_client.connect()
     t = threading.Thread(target=db.MQTTClient.loop_forever,
                          args=(mqtt_client,))

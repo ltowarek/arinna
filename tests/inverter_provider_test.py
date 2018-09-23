@@ -3,13 +3,12 @@
 import arinna.inverter_provider as ip
 from tests.fakes.serial import FakeSerial
 import arinna.database_provider as db
-import paho.mqtt.client
 import asyncio
 
 
 def test_mqtt_subscriber_sends_qpigs_when_request_is_received():
     fake_serial = FakeSerial()
-    with db.MQTTClient(paho.mqtt.client.Client()) as mqtt_client:
+    with db.MQTTClient() as mqtt_client:
         serial_adapter = ip.InverterSerialAdapter(fake_serial)
         subscriber = ip.InverterMQTTSubscriber(serial_adapter, mqtt_client)
         subscriber.subscribe_request()
@@ -27,7 +26,7 @@ def test_mqtt_subscriber_sends_qpigs_when_request_is_received():
 
 
 def test_mqtt_publisher_publishes_response():
-    with db.MQTTClient(paho.mqtt.client.Client()) as mqtt_client:
+    with db.MQTTClient() as mqtt_client:
         def on_message(_, user_data, message):
             user_data['payload'] = message.payload.decode()
         mqtt_client.set_on_message(on_message)
@@ -52,7 +51,7 @@ def test_mqtt_publisher_publishes_response():
 
 
 def test_mqtt_publisher_publishes_request():
-    with db.MQTTClient(paho.mqtt.client.Client()) as mqtt_client:
+    with db.MQTTClient() as mqtt_client:
         def on_message(_, user_data, message):
             user_data['payload'] = message.payload.decode()
         mqtt_client.set_on_message(on_message)

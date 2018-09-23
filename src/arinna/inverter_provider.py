@@ -8,7 +8,6 @@ import serial
 import sys
 import arinna.config as config
 import arinna.database_provider as db
-import paho.mqtt.client
 
 logger = logging.getLogger(__name__)
 
@@ -170,7 +169,7 @@ def main():
     setup_logging(settings.logs_directory)
 
     logger.info('Starting MQTT loop')
-    mqtt_client = db.MQTTClient(paho.mqtt.client.Client())
+    mqtt_client = db.MQTTClient()
     mqtt_client.connect()
     mqtt_client.loop_start()
 

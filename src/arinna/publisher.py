@@ -7,7 +7,6 @@ import os
 import sys
 import arinna.config as config
 import arinna.database_provider as database_provider
-import paho.mqtt.client
 
 logger = logging.getLogger(__name__)
 
@@ -36,8 +35,7 @@ def main():
     settings = config.load()
     setup_logging(settings.logs_directory)
 
-    with database_provider.MQTTClient(
-            paho.mqtt.client.Client()) as mqtt_client:
+    with database_provider.MQTTClient() as mqtt_client:
         publisher = inverter_provider.InverterMQTTPublisher(mqtt_client)
         publisher.publish_request('QPIGS')
 
