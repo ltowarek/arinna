@@ -8,7 +8,7 @@ import yaml
 class Config:
     def __init__(self):
         self.settings = {
-            'logs_directory': '',
+            'logging_config': '',
             'serial_port': '',
         }
 

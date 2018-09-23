@@ -2,8 +2,7 @@
 
 from collections import namedtuple
 import logging
-import logging.handlers
-import os
+import arinna.log as log
 import serial
 import sys
 import arinna.config as config
@@ -144,29 +143,9 @@ class InverterMQTTPublisher:
         logger.info('Message published')
 
 
-def setup_logging(logs_directory):
-    logger.setLevel(logging.DEBUG)
-
-    file_handler = logging.handlers.TimedRotatingFileHandler(
-        os.path.join(logs_directory, 'inverter_provider.log'),
-        interval=5, when='m', backupCount=1)
-    file_handler.setLevel(logging.DEBUG)
-
-    console_handler = logging.StreamHandler()
-    console_handler.setLevel(logging.INFO)
-
-    formatter = logging.Formatter(
-        '%(asctime)s - %(name)s - %(levelname)s - %(message)s')
-    file_handler.setFormatter(formatter)
-    console_handler.setFormatter(formatter)
-
-    logger.addHandler(file_handler)
-    logger.addHandler(console_handler)
-
-
 def main():
     settings = config.load()
-    setup_logging(settings.logs_directory)
+    log.setup_logging()
 
     logger.info('Starting MQTT loop')
     mqtt_client = db.MQTTClient()

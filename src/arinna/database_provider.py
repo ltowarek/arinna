@@ -3,10 +3,8 @@
 import influxdb
 import paho.mqtt.client
 import logging
-import logging.handlers
-import os
+import arinna.log as log
 import sys
-import arinna.config as config
 
 logger = logging.getLogger(__name__)
 
@@ -177,26 +175,6 @@ class MQTTClient:
         self.disconnect()
 
 
-def setup_logging(logs_directory):
-    logger.setLevel(logging.DEBUG)
-
-    file_handler = logging.handlers.TimedRotatingFileHandler(
-        os.path.join(logs_directory, 'database_provider.log'),
-        interval=5, when='m', backupCount=1)
-    file_handler.setLevel(logging.DEBUG)
-
-    console_handler = logging.StreamHandler()
-    console_handler.setLevel(logging.INFO)
-
-    formatter = logging.Formatter(
-        '%(asctime)s - %(name)s - %(levelname)s - %(message)s')
-    file_handler.setFormatter(formatter)
-    console_handler.setFormatter(formatter)
-
-    logger.addHandler(file_handler)
-    logger.addHandler(console_handler)
-
-
 def percent(value):
     return float(int(value) / 100)
 
@@ -206,8 +184,7 @@ def bool_from_string(value):
 
 
 def main():
-    settings = config.load()
-    setup_logging(settings.logs_directory)
+    log.setup_logging()
 
     subscriptions = {
         'inverter/response/grid_voltage': {

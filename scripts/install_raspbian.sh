@@ -38,8 +38,5 @@ sudo systemctl disable grafana-server
 sudo mkdir /etc/arinna
 sudo chown developer:developer /etc/arinna
 
-sudo mkdir /var/log/arinna
-sudo chown developer:developer /var/log/arinna
-
-cp resources/config.py /etc/arinna
-
+cp resources/config.yaml /etc/arinna
+cp resources/logging.taml /etc/arinna
