@@ -6,7 +6,7 @@ import arinna.log as log
 import serial
 import sys
 import arinna.config as config
-import arinna.database_provider as db
+import arinna.mqtt_client
 
 logger = logging.getLogger(__name__)
 
@@ -148,7 +148,7 @@ def main():
     log.setup_logging()
 
     logger.info('Starting MQTT loop')
-    mqtt_client = db.MQTTClient()
+    mqtt_client = arinna.mqtt_client.MQTTClient()
     mqtt_client.connect()
     mqtt_client.loop_start()
 
