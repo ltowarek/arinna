@@ -7,8 +7,6 @@ PartOf=arinna.target
 [Service]
 Type=simple
 ExecStart=/usr/bin/python3 -m arinna.database_provider
-User=developer
-Group=developer
 
 [Install]
 WantedBy=arinna.target

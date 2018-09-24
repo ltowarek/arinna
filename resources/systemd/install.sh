@@ -1,6 +1,8 @@
 #!/bin/sh
 
-sudo cp \
+mkdir -p ~/.config/systemd/user/
+
+cp \
     arinna-database.service \
     arinna-inverter.service \
     arinna-publisher.service \
@@ -8,14 +10,14 @@ sudo cp \
     arinna-load-balancer.service \
     arinna-load-balancer.timer \
     arinna.target \
-    /etc/systemd/system/
-sudo systemctl daemon-reload
+    ~/.config/systemd/user/
+systemctl --user daemon-reload
 
-sudo systemctl enable \
+systemctl --user enable \
     arinna-database.service \
     arinna-inverter.service \
     arinna-publisher.timer \
     arinna-load-balancer.timer
 
 # Uncomment to enable boot loading
-#sudo systemctl enable arinna.target
+#systemctl --user enable arinna.target
