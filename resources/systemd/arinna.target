@@ -2,4 +2,4 @@
 Description=Arinna service group
 
 [Install]
-WantedBy=default.target
+WantedBy=multi-user.target
