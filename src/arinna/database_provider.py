@@ -108,7 +108,7 @@ def main():
             'type': bool_from_string
         }, 'inverter/response/battery_voltage_offset_for_fans_on': {
             'measurement': 'battery_voltage_offset_for_fans_on',
-            'type': bool_from_string
+            'type': int
         }, 'inverter/response/eeprom_version': {
             'measurement': 'eeprom_version',
             'type': int
