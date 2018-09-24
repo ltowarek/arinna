@@ -132,6 +132,8 @@ def main():
         with MQTTClient() as mqtt_client:
             mqtt_client.set_on_message(on_message)
             mqtt_client.set_user_data(subscriptions)
+            for topic in subscriptions:
+                mqtt_client.subscribe(topic)
             mqtt_client.loop_forever()
     except KeyboardInterrupt:
         logger.info('MQTT loop stopped by user')
