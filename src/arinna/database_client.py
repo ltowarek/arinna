@@ -13,7 +13,6 @@ class DatabaseClient:
             self.db_client = influxdb.InfluxDBClient()
         else:
             self.db_client = db_client
-        self.db_client = db_client
         self.db_name = db_name
 
     def close(self):
