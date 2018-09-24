@@ -13,6 +13,11 @@ handlers:
         level: INFO
         formatter: precise
 
+loggers:
+    paho.mqtt.client:
+      level: ERROR
+      handlers: [console]
+
 root:
       level: INFO
       handlers: [console]

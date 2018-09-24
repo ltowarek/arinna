@@ -10,6 +10,7 @@ class MQTTClient:
     def __init__(self, mqtt_client=None):
         if not mqtt_client:
             self.mqtt_client = paho.mqtt.client.Client()
+            self.mqtt_client.enable_logger()
         else:
             self.mqtt_client = mqtt_client
 
