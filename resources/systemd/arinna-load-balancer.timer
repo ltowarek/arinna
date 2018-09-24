@@ -5,6 +5,7 @@ PartOf=arinna.target
 [Timer]
 OnUnitActiveSec=10s
 AccuracySec=1s
+OnBootSec=2m
 
 [Install]
 WantedBy=arinna.target
