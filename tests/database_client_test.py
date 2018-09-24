@@ -39,6 +39,12 @@ def database_with_data(database, sample_measurement, sample_data,
     return database
 
 
+def database_default_constructor():
+    database_client = DatabaseClient()
+    assert database_client.db_client is not None
+    assert 'inverter' == database_client.db_name
+
+
 def test_moving_average_without_measurements(sample_measurement,
                                              sample_database,
                                              database):
