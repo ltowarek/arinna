@@ -19,13 +19,10 @@ systemctl enable \
     arinna-load-balancer.service \
     arinna-load-balancer.timer
 
-systemctl enable \
+systemctl start \
     arinna-database.service \
     arinna-inverter.service \
     arinna-publisher.service \
     arinna-publisher.timer \
     arinna-load-balancer.service \
     arinna-load-balancer.timer
-
-# Uncomment to enable boot loading
-#systemctl enable arinna.target
