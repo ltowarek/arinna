@@ -3,31 +3,24 @@
 from collections import namedtuple
 import logging
 import arinna.log as log
-import serial
 import sys
+import queue
 import arinna.config as config
 import arinna.mqtt_client
+import mppsolar
 
 logger = logging.getLogger(__name__)
 
-QPIGS = bytes.fromhex('51 50 49 47 53 b7 a9 0d')
-
 
 class InverterSerialAdapter:
-    def __init__(self, serial_port):
-        self.serial_port = serial_port
+    def __init__(self, port, baudrate=2400):
+        logger.info('Port: {}'.format(port))
+        logger.info('Baudrate: {}'.format(baudrate))
+        self.serial_adapter = mppsolar.mppUtils(port, baudrate)
 
     def send_command(self, command):
-        self.serial_port.write(command)
-
-    def receive_response(self):
-        raw_response = self.serial_port.read_until(b'\r')
-        logger.info('Raw response: {}'.format(raw_response))
+        raw_response = self.serial_adapter.getResponse(command)
         return raw_response
-
-    @staticmethod
-    def is_valid_response(response):
-        return response != b'(ACK9 \r' and response != b'(NAKss\r'
 
     @staticmethod
     def parse_response(raw_response):
@@ -73,8 +66,7 @@ class InverterSerialAdapter:
         current_token_value = ''
 
         logger.info('Parsing response')
-        for b in raw_response:
-            c = chr(b)
+        for c in raw_response:
             if c == '(':
                 logger.debug('Resetting current byte and token ids')
                 current_byte_id = 0
@@ -104,20 +96,20 @@ class InverterSerialAdapter:
         return response
 
 
-def on_message(_, serial_adapter, message):
+def on_message(_, command_queue, message):
     logger.info('Message received')
     logger.info('Payload: {}'.format(message.payload))
     logger.info('Topic: {}'.format(message.topic))
-    serial_adapter.send_command(QPIGS)
+    command_queue.put(message.payload.decode())
 
 
 class InverterMQTTSubscriber:
-    def __init__(self, serial_adapter, mqtt_client):
-        self.serial_adapter = serial_adapter
+    def __init__(self, command_queue, mqtt_client):
+        self.command_queue = command_queue
         self.mqtt_client = mqtt_client
 
     def subscribe_request(self):
-        self.mqtt_client.set_user_data(self.serial_adapter)
+        self.mqtt_client.set_user_data(self.command_queue)
         self.mqtt_client.set_on_message(on_message)
         self.mqtt_client.subscribe('inverter/request')
 
@@ -147,32 +139,29 @@ def main():
     settings = config.load()
     log.setup_logging()
 
+    serial_adapter = InverterSerialAdapter(settings.serial_port)
+    command_queue = queue.Queue()
+
     logger.info('Starting MQTT loop')
     mqtt_client = arinna.mqtt_client.MQTTClient()
     mqtt_client.connect()
     mqtt_client.loop_start()
+    mqtt_subscriber = InverterMQTTSubscriber(command_queue,
+                                             mqtt_client)
+    mqtt_subscriber.subscribe_request()
+    mqtt_publisher = InverterMQTTPublisher(mqtt_client)
 
     try:
-        logger.info(
-            'Starting listening on port: {}'.format(settings.serial_port))
-        with serial.Serial(settings.serial_port, 2400) as serial_port:
-            serial_adapter = InverterSerialAdapter(serial_port)
-            mqtt_subscriber = InverterMQTTSubscriber(serial_adapter,
-                                                     mqtt_client)
-            mqtt_subscriber.subscribe_request()
-            mqtt_publisher = InverterMQTTPublisher(mqtt_client)
-
-            while True:
-                raw_response = serial_adapter.receive_response()
-
-                if not serial_adapter.is_valid_response(raw_response):
-                    logger.warning('Invalid response')
-                    continue
-
-                parsed_response = serial_adapter.parse_response(
-                    raw_response)
-
-                mqtt_publisher.publish_response(parsed_response)
+        logger.info('Starting listening loop')
+        while True:
+            logger.info('Waiting for command')
+            command = command_queue.get()
+            logger.info('Command received: {}'.format(command))
+            raw_response = serial_adapter.send_command(command)
+            logger.info('Raw response: {}'.format(raw_response))
+            response = serial_adapter.parse_response(raw_response)
+            logger.info('Response: {}'.format(response))
+            mqtt_publisher.publish_response(response)
     except KeyboardInterrupt:
         logger.info('Listening loop stopped by user')
     except Exception:

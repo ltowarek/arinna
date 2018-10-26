@@ -25,8 +25,8 @@ setuptools.setup(
     install_requires=[
         'paho-mqtt',
         'influxdb',
-        'pyserial',
-        'pyyaml'
+        'pyyaml',
+        'mpp-solar @ https://github.com/ltowarek/mpp-solar/archive/master.zip'
     ],
     extras_require={
         'dev': [

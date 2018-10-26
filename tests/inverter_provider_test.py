@@ -2,27 +2,22 @@
 
 import arinna.inverter_provider as ip
 import arinna.mqtt_client
-from tests.fakes.serial import FakeSerial
 import asyncio
+import queue
+import time
 
 
-def test_mqtt_subscriber_sends_qpigs_when_request_is_received():
-    fake_serial = FakeSerial()
+def test_mqtt_subscriber_puts_received_command_into_queue():
+    command_queue = queue.Queue()
+    command = 'QPIGS'
     with arinna.mqtt_client.MQTTClient() as mqtt_client:
-        serial_adapter = ip.InverterSerialAdapter(fake_serial)
-        subscriber = ip.InverterMQTTSubscriber(serial_adapter, mqtt_client)
+        subscriber = ip.InverterMQTTSubscriber(command_queue, mqtt_client)
         subscriber.subscribe_request()
-        mqtt_client.publish('inverter/request')
-
-        async def wait_for_result(client, serial_port):
-            while not serial_port.last_written_data:
-                client.loop()
-
-        loop = asyncio.get_event_loop()
-        loop.run_until_complete(wait_for_result(mqtt_client, fake_serial))
-        loop.stop()
-
-    assert ip.QPIGS == fake_serial.last_written_data
+        mqtt_client.publish('inverter/request', command)
+        time_end = time.time() + 60 * 5
+        while time.time() < time_end and command_queue.empty():
+            mqtt_client.loop()
+    assert command == command_queue.get(timeout=5)
 
 
 def test_mqtt_publisher_publishes_response():
@@ -72,45 +67,6 @@ def test_mqtt_publisher_publishes_request():
         loop.stop()
 
         assert request == mutable_object['payload']
-
-
-def test_serial_adapter_sends_qpigs_command():
-    fake_serial = FakeSerial()
-    command = ip.QPIGS
-    serial_adapter = ip.InverterSerialAdapter(fake_serial)
-    serial_adapter.send_command(command)
-    assert command == fake_serial.last_written_data
-
-
-def test_serial_adapter_receives_response_until_cr():
-    fake_serial = FakeSerial()
-    expected_response = b'sample_response'
-    fake_serial.response = expected_response + b'\r'
-    serial_adapter = ip.InverterSerialAdapter(fake_serial)
-    actual_response = serial_adapter.receive_response()
-    assert expected_response == actual_response
-
-
-def test_serial_adapter_receives_two_responses_from_single_input():
-    fake_serial = FakeSerial()
-    expected_responses = [b'input1', b'input2']
-    fake_serial.response = b'\r'.join(expected_responses) + b'\r'
-    serial_adapter = ip.InverterSerialAdapter(fake_serial)
-    for expected_response in expected_responses:
-        actual_response = serial_adapter.receive_response()
-        assert expected_response == actual_response
-
-
-def test_is_valid_response_returns_false_given_ack_is_passed():
-    assert ip.InverterSerialAdapter.is_valid_response(b'(ACK9 \r') is False
-
-
-def test_is_valid_response_returns_false_given_nak_is_passed():
-    assert ip.InverterSerialAdapter.is_valid_response(b'(NAKss\r') is False
-
-
-def test_is_valid_response_returns_true_given_valid_response_is_passed():
-    assert ip.InverterSerialAdapter.is_valid_response(b'(NAKss\r') is False
 
 
 class QPIGSResponseBuilder:
@@ -188,7 +144,7 @@ class QPIGSResponseBuilder:
                '{is_switch_on}' \
                '{is_dustproof_installed}' \
                '{crc}' \
-               '{end_byte}'.format(**self.tokens).encode()
+               '{end_byte}'.format(**self.tokens)
 
 
 def verify_parsed_response(key, value):
