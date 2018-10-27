@@ -67,5 +67,3 @@ def test_mqtt_publisher_publishes_request():
         loop.stop()
 
         assert request == mutable_object['payload']
-
-
