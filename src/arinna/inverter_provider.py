@@ -12,7 +12,7 @@ logger = logging.getLogger(__name__)
 
 
 class InverterSerialAdapter:
-    def __init__(self, port, baudrate=2400):
+    def __init__(self, port, baudrate):
         logger.info('Port: {}'.format(port))
         logger.info('Baudrate: {}'.format(baudrate))
         self.serial_adapter = mppsolar.mppUtils(port, baudrate)
@@ -66,7 +66,8 @@ def main():
     settings = config.load()
     log.setup_logging()
 
-    serial_adapter = InverterSerialAdapter(settings.serial_port)
+    serial_adapter = InverterSerialAdapter(settings.serial_port,
+                                           settings.baudrate)
     command_queue = queue.Queue()
 
     logger.info('Starting MQTT loop')

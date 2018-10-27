@@ -10,6 +10,7 @@ class Config:
         self.settings = {
             'logging_config': '',
             'serial_port': '',
+            'baudrate': 2400,
         }
 
     def from_yaml(self, path):

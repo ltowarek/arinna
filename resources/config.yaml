@@ -1,3 +1,4 @@
 ---
 logging_config: /etc/arinna/logging.yaml
 serial_port: /dev/ttyS0
+baudrate: 2400
