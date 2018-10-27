@@ -30,6 +30,18 @@ def bool_from_string(value):
     return True if bool(int(value)) else False
 
 
+def int_from_device_mode(value):
+    mapping = {
+        'Power On': 0,
+        'Standby': 1,
+        'Line': 2,
+        'Battery': 3,
+        'Fault': 4,
+        'Power Saving': 5
+    }
+    return mapping[value]
+
+
 def main():
     log.setup_logging()
 
@@ -124,6 +136,9 @@ def main():
         }, 'inverter/response/is_dustproof_installed': {
             'measurement': 'is_dustproof_installed',
             'type': bool_from_string
+        }, 'inverter/response/device_mode': {
+            'measurement': 'device_mode',
+            'type': int_from_device_mode
         }
     }
 

@@ -18,3 +18,12 @@ def test_percent():
     assert 0.10 == db.percent(10)
     assert 0.20 == db.percent(20)
     assert 1.00 == db.percent(100)
+
+
+def test_int_from_device_mode():
+    assert 0 == db.int_from_device_mode('Power On')
+    assert 1 == db.int_from_device_mode('Standby')
+    assert 2 == db.int_from_device_mode('Line')
+    assert 3 == db.int_from_device_mode('Battery')
+    assert 4 == db.int_from_device_mode('Fault')
+    assert 5 == db.int_from_device_mode('Power Saving')
