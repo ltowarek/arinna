@@ -13,8 +13,11 @@ def main():
     log.setup_logging()
 
     with arinna.mqtt_client.MQTTClient() as mqtt_client:
+        mqtt_client.loop_start()
         publisher = inverter_provider.InverterMQTTPublisher(mqtt_client)
         publisher.publish_request('QPIGS')
+        publisher.publish_request('QMOD')
+        mqtt_client.loop_stop()
 
     return 0
 
