@@ -87,6 +87,9 @@ def main():
             logger.info('Command received: {}'.format(command))
             response = serial_adapter.send_command(command)
             logger.info('Response: {}'.format(response))
+            if not response:
+                logger.warning('Response is empty!')
+                continue
             mqtt_publisher.publish_response(response)
     except KeyboardInterrupt:
         logger.info('Listening loop stopped by user')
