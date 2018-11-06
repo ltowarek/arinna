@@ -58,7 +58,10 @@ class DatabaseClient:
         logger.info('Moving average get')
         for point in result.get_points(measurement):
             return point['mean']
-        return None
+        else:
+            raise RuntimeError(
+                f'No moving average available for measurement '
+                f'\"{measurement}\" and time window \"{time_window}\"')
 
     def moving_stddev(self, measurement, time_window):
         logger.info('Getting moving stddev')
@@ -71,7 +74,12 @@ class DatabaseClient:
         result = self.db_client.query(query, database=self.db_name)
         logger.debug('Query result: {}'.format(result))
         logger.info('Moving stddev get')
-        return next(result.get_points(measurement))['stddev']
+        for point in result.get_points(measurement):
+            return point['stddev']
+        else:
+            raise RuntimeError(
+                f'No moving stddev available for measurement '
+                f'\"{measurement}\" and time window \"{time_window}\"')
 
     def __enter__(self):
         logger.debug('Entering context manager')

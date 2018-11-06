@@ -49,9 +49,8 @@ def test_moving_average_without_measurements(sample_measurement,
                                              sample_database,
                                              database):
     database_client = DatabaseClient(database, db_name=sample_database)
-    expected = None
-    actual = database_client.moving_average(sample_measurement, '0s')
-    assert expected == actual
+    with pytest.raises(RuntimeError):
+        database_client.moving_average(sample_measurement, '1m')
 
 
 def test_moving_average_of_all_measurements(sample_data, sample_measurement,
@@ -75,6 +74,16 @@ def test_moving_average_of_last_2_measurements(sample_data, sample_measurement,
     actual = database_client.moving_average(sample_measurement,
                                             time_window='3s')
     assert expected == actual
+
+
+def test_moving_stddev_without_measurements(sample_measurement,
+                                            sample_database,
+                                            database):
+    database_client = DatabaseClient(database,
+                                     db_name=sample_database)
+    with pytest.raises(RuntimeError):
+        database_client.moving_stddev(sample_measurement,
+                                      time_window='0s')
 
 
 def test_moving_stddev_of_all_measurements(sample_data, sample_measurement,
