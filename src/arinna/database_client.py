@@ -60,8 +60,8 @@ class DatabaseClient:
             return point['mean']
         else:
             raise RuntimeError(
-                f'No moving average available for measurement '
-                f'\"{measurement}\" and time window \"{time_window}\"')
+                'No moving average available for measurement \"{}\"'
+                ' and time window \"{}\"'.format(measurement, time_window))
 
     def moving_stddev(self, measurement, time_window):
         logger.info('Getting moving stddev')
@@ -78,8 +78,8 @@ class DatabaseClient:
             return point['stddev']
         else:
             raise RuntimeError(
-                f'No moving stddev available for measurement '
-                f'\"{measurement}\" and time window \"{time_window}\"')
+                'No moving stddev available for measurement \"{}\"'
+                ' and time window \"{}\"'.format(measurement, time_window))
 
     def __enter__(self):
         logger.debug('Entering context manager')
