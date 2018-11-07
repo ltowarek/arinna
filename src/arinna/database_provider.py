@@ -11,15 +11,18 @@ logger = logging.getLogger(__name__)
 
 
 def on_message(_, subscriptions, message):
-    logger.info('Message received')
-    logger.info('Payload: {}'.format(message.payload))
-    logger.info('Topic: {}'.format(message.topic))
-    topic = message.topic
-    subscription = subscriptions[topic]
-    raw_value = message.payload.decode().replace(',', '.')
-    with DatabaseClient() as db_client:
-        db_client.save(subscription['measurement'],
-                       subscription['type'](raw_value))
+    try:
+        logger.info('Message received')
+        logger.info('Payload: {}'.format(message.payload))
+        logger.info('Topic: {}'.format(message.topic))
+        topic = message.topic
+        subscription = subscriptions[topic]
+        raw_value = message.payload.decode().replace(',', '.')
+        with DatabaseClient() as db_client:
+            db_client.save(subscription['measurement'],
+                           subscription['type'](raw_value))
+    except Exception:
+        logger.exception('Unknown exception occurred in on_message')
 
 
 def percent(value):

@@ -23,10 +23,13 @@ class InverterSerialAdapter:
 
 
 def on_message(_, command_queue, message):
-    logger.info('Message received')
-    logger.info('Payload: {}'.format(message.payload))
-    logger.info('Topic: {}'.format(message.topic))
-    command_queue.put(message.payload.decode())
+    try:
+        logger.info('Message received')
+        logger.info('Payload: {}'.format(message.payload))
+        logger.info('Topic: {}'.format(message.topic))
+        command_queue.put(message.payload.decode())
+    except Exception:
+        logger.exception('Unknown exception occurred in on_message')
 
 
 class InverterMQTTSubscriber:
