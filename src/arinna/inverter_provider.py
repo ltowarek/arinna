@@ -88,11 +88,17 @@ def main():
             logger.info('Waiting for command')
             command = command_queue.get()
             logger.info('Command received: {}'.format(command))
-            response = serial_adapter.send_command(command)
-            logger.info('Response: {}'.format(response))
+
+            try:
+                response = serial_adapter.send_command(command)
+            except AttributeError:
+                logger.warning('Failed to parse response. Skipping.')
+                continue
             if not response:
                 logger.warning('Response is empty!')
                 continue
+            logger.info('Response: {}'.format(response))
+
             mqtt_publisher.publish_response(response)
     except KeyboardInterrupt:
         logger.info('Listening loop stopped by user')
