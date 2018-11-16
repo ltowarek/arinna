@@ -31,3 +31,4 @@ curl -H "Accept: application/csv" -G "http://localhost:8086/query?db=inverter" -
 curl -H "Accept: application/csv" -G "http://localhost:8086/query?db=inverter" --data-urlencode "q=SELECT * FROM \"pv_charging_power\"" > pv_charging_power.csv
 curl -H "Accept: application/csv" -G "http://localhost:8086/query?db=inverter" --data-urlencode "q=SELECT * FROM \"pv_input_current_for_battery\"" > pv_input_current_for_battery.csv
 curl -H "Accept: application/csv" -G "http://localhost:8086/query?db=inverter" --data-urlencode "q=SELECT * FROM \"pv_input_voltage\"" > pv_input_voltage.csv
+curl -H "Accept: application/csv" -G "http://localhost:8086/query?db=inverter" --data-urlencode "q=SELECT * FROM \"device_mode\"" > device_mode.csv
