@@ -109,6 +109,72 @@ def test_moving_stddev_of_last_3_measurements(sample_data, sample_measurement,
     assert expected == actual
 
 
+def test_moving_min_without_measurements(sample_measurement,
+                                         sample_database,
+                                         database):
+    database_client = DatabaseClient(database,
+                                     db_name=sample_database)
+    with pytest.raises(RuntimeError):
+        database_client.moving_min(sample_measurement,
+                                   time_window='0s')
+
+
+def test_moving_min_of_all_measurements(sample_data, sample_measurement,
+                                        sample_database,
+                                        database_with_data):
+    database_client = DatabaseClient(database_with_data,
+                                     db_name=sample_database)
+    expected = min(sample_data)
+    actual = database_client.moving_min(sample_measurement,
+                                        time_window='{}s'.format(
+                                            len(sample_data) + 1))
+    assert expected == actual
+
+
+def test_moving_min_of_last_3_measurements(sample_data, sample_measurement,
+                                           sample_database,
+                                           database_with_data):
+    database_client = DatabaseClient(database_with_data,
+                                     db_name=sample_database)
+    expected = min(sample_data[-3:])
+    actual = database_client.moving_min(sample_measurement,
+                                        time_window='4s')
+    assert expected == actual
+
+
+def test_moving_max_without_measurements(sample_measurement,
+                                         sample_database,
+                                         database):
+    database_client = DatabaseClient(database,
+                                     db_name=sample_database)
+    with pytest.raises(RuntimeError):
+        database_client.moving_max(sample_measurement,
+                                   time_window='0s')
+
+
+def test_moving_max_of_all_measurements(sample_data, sample_measurement,
+                                        sample_database,
+                                        database_with_data):
+    database_client = DatabaseClient(database_with_data,
+                                     db_name=sample_database)
+    expected = max(sample_data)
+    actual = database_client.moving_max(sample_measurement,
+                                        time_window='{}s'.format(
+                                            len(sample_data) + 1))
+    assert expected == actual
+
+
+def test_moving_max_of_last_3_measurements(sample_data, sample_measurement,
+                                           sample_database,
+                                           database_with_data):
+    database_client = DatabaseClient(database_with_data,
+                                     db_name=sample_database)
+    expected = max(sample_data[-3:])
+    actual = database_client.moving_max(sample_measurement,
+                                        time_window='4s')
+    assert expected == actual
+
+
 def test_database_client_context_manager_support(database):
     database_client = DatabaseClient(database)
     with database_client as db_client:

@@ -81,6 +81,42 @@ class DatabaseClient:
                 'No moving stddev available for measurement \"{}\"'
                 ' and time window \"{}\"'.format(measurement, time_window))
 
+    def moving_min(self, measurement, time_window):
+        logger.info('Getting moving min')
+        logger.info('Measurement: {}'.format(measurement))
+        logger.info('Time window: {}'.format(time_window))
+        query = 'SELECT MIN("value") ' \
+                'FROM "{}" WHERE time > now() - {}'.format(measurement,
+                                                           time_window)
+        logger.debug('Query: {}'.format(query))
+        result = self.db_client.query(query, database=self.db_name)
+        logger.debug('Query result: {}'.format(result))
+        logger.info('Moving min get')
+        for point in result.get_points(measurement):
+            return point['min']
+        else:
+            raise RuntimeError(
+                'No moving min available for measurement \"{}\"'
+                ' and time window \"{}\"'.format(measurement, time_window))
+
+    def moving_max(self, measurement, time_window):
+        logger.info('Getting moving max')
+        logger.info('Measurement: {}'.format(measurement))
+        logger.info('Time window: {}'.format(time_window))
+        query = 'SELECT MAX("value") ' \
+                'FROM "{}" WHERE time > now() - {}'.format(measurement,
+                                                           time_window)
+        logger.debug('Query: {}'.format(query))
+        result = self.db_client.query(query, database=self.db_name)
+        logger.debug('Query result: {}'.format(result))
+        logger.info('Moving max get')
+        for point in result.get_points(measurement):
+            return point['max']
+        else:
+            raise RuntimeError(
+                'No moving max available for measurement \"{}\"'
+                ' and time window \"{}\"'.format(measurement, time_window))
+
     def __enter__(self):
         logger.debug('Entering context manager')
         return self
