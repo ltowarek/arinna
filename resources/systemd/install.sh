@@ -7,6 +7,8 @@ cp \
     arinna-publisher.timer \
     arinna-load-balancer.service \
     arinna-load-balancer.timer \
+    arinna-charger.service \
+    arinna-charger.timer \
     arinna.target \
     /etc/systemd/system/
 systemctl daemon-reload
@@ -17,7 +19,9 @@ systemctl enable \
     arinna-publisher.service \
     arinna-publisher.timer \
     arinna-load-balancer.service \
-    arinna-load-balancer.timer
+    arinna-load-balancer.timer \
+    arinna-charger.service \
+    arinna-charger.timer
 
 systemctl start \
     arinna-database.service \
@@ -25,4 +29,6 @@ systemctl start \
     arinna-publisher.service \
     arinna-publisher.timer \
     arinna-load-balancer.service \
-    arinna-load-balancer.timer
+    arinna-load-balancer.timer \
+    arinna-charger.service \
+    arinna-charger.timer

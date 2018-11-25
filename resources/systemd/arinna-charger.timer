@@ -1,0 +1,11 @@
+[Unit]
+Description=Arinna charger timer
+PartOf=arinna.target
+
+[Timer]
+OnUnitActiveSec=1m
+AccuracySec=1s
+OnBootSec=2m
+
+[Install]
+WantedBy=arinna.target
