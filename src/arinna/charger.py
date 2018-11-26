@@ -36,7 +36,12 @@ class ChargingManager:
                 logger.info('Leaving charger as is')
         elif self.is_in_cheap_night_rate(now):
             battery_voltage = self.database.moving_min('battery_voltage', '5m')
-            if battery_voltage < 48.0:
+            is_charging_to_floating_enabled = self.database.moving_average(
+                'is_charging_to_floating_enabled', '3h')
+
+            if is_charging_to_floating_enabled == 1:
+                self.charger.disable()
+            elif battery_voltage < 48.0:
                 self.charger.enable()
             else:
                 logger.info('Leaving charger as is')
