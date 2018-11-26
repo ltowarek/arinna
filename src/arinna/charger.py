@@ -92,7 +92,7 @@ def main():
                 DatabaseClient() as inverter_database:
             charger = Charger(charger_database)
             charging_manager = ChargingManager(inverter_database, charger)
-            now = datetime.now()
+            now = datetime.now().time()
             charging_manager.process(now)
     except Exception:
         logger.exception('Unknown exception occurred')
