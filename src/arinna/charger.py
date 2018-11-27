@@ -19,16 +19,17 @@ class ChargingManager:
             is_ac_charging_on = self.database.moving_average(
                 'is_ac_charging_on', '5m')
             battery_voltage = self.database.moving_max('battery_voltage', '5m')
-            is_charging_to_floating_enabled = self.database.moving_average(
-                'is_charging_to_floating_enabled', '5m')
+            is_charging_to_floating_enabled = \
+                self.database.moving_true_percentage(
+                    'is_charging_to_floating_enabled', '5m')
 
             if is_ac_charging_on == 0:
                 self.charger.disable()
             elif (
-                    is_charging_to_floating_enabled == 1
+                    is_charging_to_floating_enabled == 1.0
                     and battery_voltage < 56.4
             ) or (
-                    is_charging_to_floating_enabled == 0
+                    is_charging_to_floating_enabled == 0.0
                     and battery_voltage < 54.0
             ):
                 self.charger.enable()
@@ -36,10 +37,11 @@ class ChargingManager:
                 logger.info('Leaving charger as is')
         elif self.is_in_cheap_night_rate(now):
             battery_voltage = self.database.moving_min('battery_voltage', '5m')
-            is_charging_to_floating_enabled = self.database.moving_average(
-                'is_charging_to_floating_enabled', '3h')
+            is_charging_to_floating_enabled = \
+                self.database.moving_true_percentage(
+                    'is_charging_to_floating_enabled', '3h')
 
-            if is_charging_to_floating_enabled == 1:
+            if is_charging_to_floating_enabled == 1.0:
                 self.charger.disable()
             elif battery_voltage < 48.0:
                 self.charger.enable()
