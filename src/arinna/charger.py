@@ -16,6 +16,7 @@ class ChargingManager:
 
     def process(self, now):
         if self.is_in_cheap_day_rate(now):
+            logger.info('In cheap day rate')
             is_ac_charging_on = self.database.moving_true_percentage(
                 'is_ac_charging_on', '5m')
             battery_voltage = self.database.moving_max('battery_voltage', '5m')
@@ -36,6 +37,7 @@ class ChargingManager:
             else:
                 logger.info('Leaving charger as is')
         elif self.is_in_cheap_night_rate(now):
+            logger.info('In cheap night rate')
             battery_voltage = self.database.moving_min('battery_voltage', '5m')
             is_charging_to_floating_enabled = \
                 self.database.moving_true_percentage(
@@ -48,6 +50,7 @@ class ChargingManager:
             else:
                 logger.info('Leaving charger as is')
         else:
+            logger.info('Not in cheap rate')
             self.charger.disable()
 
     @staticmethod
