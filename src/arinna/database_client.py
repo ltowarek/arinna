@@ -117,6 +117,24 @@ class DatabaseClient:
                 'No moving max available for measurement \"{}\"'
                 ' and time window \"{}\"'.format(measurement, time_window))
 
+    def moving_true_percentage(self, measurement, time_window):
+        logger.info('Getting moving true percentage')
+        logger.info('Measurement: {}'.format(measurement))
+        logger.info('Time window: {}'.format(time_window))
+        query = 'SELECT "value"' \
+                'FROM "{}" WHERE time > now() - {}'.format(measurement,
+                                                           time_window)
+        logger.debug('Query: {}'.format(query))
+        result = self.db_client.query(query, database=self.db_name)
+        logger.debug('Query result: {}'.format(result))
+        logger.info('Moving true percentage get')
+        values = [p['value'] for p in result.get_points(measurement)]
+        if not values:
+            raise RuntimeError(
+                'No moving true percentage available for measurement \"{}\"'
+                ' and time window \"{}\"'.format(measurement, time_window))
+        return true_percentage(values)
+
     def __enter__(self):
         logger.debug('Entering context manager')
         return self
@@ -124,3 +142,7 @@ class DatabaseClient:
     def __exit__(self, exc_type, exc_val, exc_tb):
         logger.debug('Exiting context manager')
         self.close()
+
+
+def true_percentage(x):
+    return len([y for y in x if y is True]) / len(x)
