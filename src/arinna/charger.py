@@ -3,8 +3,10 @@
 from datetime import datetime, time
 import logging
 import arinna.log as log
+import arinna.config as config
 import sys
 from arinna.database_client import DatabaseClient
+from arinna.inverter_provider import InverterSerialAdapter
 
 logger = logging.getLogger(__name__)
 
@@ -70,32 +72,31 @@ def time_in_range(start, end, x):
 
 
 class Charger:
-    def __init__(self, database):
-        self.database = database
+    def __init__(self, inverter):
+        self.inverter = inverter
 
     def enable(self):
         logger.info('Enabling charger')
-        self.set_state(True)
+        self.inverter.send_command('POP00')
+        self.inverter.send_command('PCP02')
         logger.info('Charger enabled')
 
     def disable(self):
         logger.info('Disabling charger')
-        self.set_state(False)
+        self.inverter.send_command('POP02')
+        self.inverter.send_command('PCP01')
         logger.info('Charger disabled')
-
-    def set_state(self, is_enabled):
-        logger.info('Setting charger state')
-        self.database.save('is_enabled', is_enabled)
-        logger.info('Charger state set')
 
 
 def main():
+    settings = config.load()
     log.setup_logging()
 
     try:
-        with DatabaseClient(db_name='charger') as charger_database, \
-                DatabaseClient() as inverter_database:
-            charger = Charger(charger_database)
+        serial_adapter = InverterSerialAdapter(settings.serial_port,
+                                               settings.baudrate)
+        with DatabaseClient() as inverter_database:
+            charger = Charger(serial_adapter)
             charging_manager = ChargingManager(inverter_database, charger)
             now = datetime.now().time()
             charging_manager.process(now)

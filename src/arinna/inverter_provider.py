@@ -18,6 +18,7 @@ class InverterSerialAdapter:
         self.serial_adapter = mppsolar.mppUtils(port, baudrate)
 
     def send_command(self, command):
+        logger.info('Sending command: {}'.format(command))
         response = self.serial_adapter.getResponseDict(command)
         return response
 
