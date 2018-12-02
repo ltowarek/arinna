@@ -3,10 +3,10 @@
 from datetime import datetime, time
 import logging
 import arinna.log as log
-import arinna.config as config
+import arinna.mqtt_client
+import arinna.inverter_provider as inverter_provider
 import sys
 from arinna.database_client import DatabaseClient
-from arinna.inverter_provider import InverterSerialAdapter
 
 logger = logging.getLogger(__name__)
 
@@ -77,29 +77,30 @@ class Charger:
 
     def enable(self):
         logger.info('Enabling charger')
-        self.inverter.send_command('POP00')
-        self.inverter.send_command('PCP02')
+        self.inverter.publish_request('POP00')
+        self.inverter.publish_request('PCP02')
         logger.info('Charger enabled')
 
     def disable(self):
         logger.info('Disabling charger')
-        self.inverter.send_command('POP02')
-        self.inverter.send_command('PCP01')
+        self.inverter.publish_request('POP02')
+        self.inverter.publish_request('PCP01')
         logger.info('Charger disabled')
 
 
 def main():
-    settings = config.load()
     log.setup_logging()
 
     try:
-        serial_adapter = InverterSerialAdapter(settings.serial_port,
-                                               settings.baudrate)
-        with DatabaseClient() as inverter_database:
-            charger = Charger(serial_adapter)
+        with arinna.mqtt_client.MQTTClient() as mqtt_client,\
+                DatabaseClient() as inverter_database:
+            mqtt_client.loop_start()
+            publisher = inverter_provider.InverterMQTTPublisher(mqtt_client)
+            charger = Charger(publisher)
             charging_manager = ChargingManager(inverter_database, charger)
             now = datetime.now().time()
             charging_manager.process(now)
+            mqtt_client.loop_stop()
     except Exception:
         logger.exception('Unknown exception occurred')
 
