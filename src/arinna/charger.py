@@ -40,7 +40,8 @@ class ChargingManager:
                 logger.info('Leaving charger as is')
         elif self.is_in_cheap_night_rate(now):
             logger.info('In cheap night rate')
-            battery_voltage = self.database.moving_min('battery_voltage', '5m')
+            battery_voltage = self.database.moving_average('battery_voltage',
+                                                           '5m')
             is_charging_to_floating_enabled = \
                 self.database.moving_true_percentage(
                     'is_charging_to_floating_enabled', '3h')
@@ -92,7 +93,7 @@ def main():
     log.setup_logging()
 
     try:
-        with arinna.mqtt_client.MQTTClient() as mqtt_client,\
+        with arinna.mqtt_client.MQTTClient() as mqtt_client, \
                 DatabaseClient() as inverter_database:
             mqtt_client.loop_start()
             publisher = inverter_provider.InverterMQTTPublisher(mqtt_client)
