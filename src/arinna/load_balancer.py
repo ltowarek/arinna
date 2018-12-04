@@ -14,29 +14,26 @@ class LoadBalancer:
         self.load = load
 
     def balance(self):
-        battery_voltage = self.database.moving_average('battery_voltage', '1m')
-        pv_input_voltage_stddev = self.database.moving_stddev(
-            'pv_input_voltage',
-            '1m')
-        if self.can_add_load(battery_voltage, pv_input_voltage_stddev):
+        device_mode = self.database.moving_average('device_mode', '5m')
+        battery_voltage = self.database.moving_average('battery_voltage', '5m')
+        pv_input_voltage = self.database.moving_average('pv_input_voltage',
+                                                        '5m')
+        is_charging_to_floating_enabled = \
+            self.database.moving_true_percentage(
+                'is_charging_to_floating_enabled', '5m')
+
+        if device_mode == 3.0 and \
+                pv_input_voltage > 95.0 and \
+                (
+                        (battery_voltage >= 56.4 and
+                         is_charging_to_floating_enabled == 0.0)
+                        or
+                        (battery_voltage >= 54.0 and
+                         is_charging_to_floating_enabled == 1.0)
+                ):
             self.load.enable()
         else:
             self.load.disable()
-
-    @classmethod
-    def can_add_load(cls, battery_voltage, pv_voltage_stddev):
-        if cls.is_battery_fully_charged(battery_voltage) and \
-                cls.is_maximum_power_point_reached(pv_voltage_stddev):
-            return True
-        return False
-
-    @staticmethod
-    def is_battery_fully_charged(voltage):
-        return voltage >= 56.0
-
-    @staticmethod
-    def is_maximum_power_point_reached(voltage_stddev):
-        return voltage_stddev < 1.0
 
 
 class Load:
