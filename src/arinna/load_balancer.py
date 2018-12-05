@@ -25,10 +25,10 @@ class LoadBalancer:
         if device_mode == 3.0 and \
                 pv_input_voltage > 95.0 and \
                 (
-                        (battery_voltage >= 56.4 and
+                        (battery_voltage >= (56.4 - 0.4) and
                          is_charging_to_floating_enabled == 0.0)
                         or
-                        (battery_voltage >= 54.0 and
+                        (battery_voltage >= (54.0 - 0.4) and
                          is_charging_to_floating_enabled == 1.0)
                 ):
             self.load.enable()
