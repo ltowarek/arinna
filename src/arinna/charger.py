@@ -76,12 +76,14 @@ class Charger:
         logger.info('Enabling charger')
         self.inverter.publish_request('POP00')
         self.inverter.publish_request('PCP02')
+        self.inverter.publish_request('MUCHGC030')
         logger.info('Charger enabled')
 
     def disable(self):
         logger.info('Disabling charger')
         self.inverter.publish_request('POP02')
         self.inverter.publish_request('PCP01')
+        self.inverter.publish_request('MUCHGC010')
         logger.info('Charger disabled')
 
 
