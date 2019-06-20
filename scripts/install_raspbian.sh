@@ -15,7 +15,7 @@ sudo systemctl disable mosquitto
 sudo apt-get install -y python3 python3-pip python3-virtualenv
 python3 -m virtualenv -p python3 venv
 
-. ../venv/bin/activate
+. venv/bin/activate
 pip install -e .[dev]
 deactivate
 
@@ -28,15 +28,12 @@ sudo apt-get update
 sudo apt-get install -y influxdb
 sudo systemctl disable influxdb
 
-sudo apt-get install -y apt-transport-https curl
-curl https://bintray.com/user/downloadSubjectPublicKey?username=bintray | sudo apt-key add -
-echo "deb https://dl.bintray.com/fg2it/deb stretch main" | sudo tee -a /etc/apt/sources.list.d/grafana.list
-sudo apt-get update
-sudo apt-get install -y grafana
+wget https://dl.grafana.com/oss/release/grafana_6.2.4_armhf.deb
+sudo dpkg -i grafana_6.2.4_armhf.deb
 sudo systemctl disable grafana-server
 
 sudo mkdir /etc/arinna
-sudo chown developer:developer /etc/arinna
+sudo chown pi:pi /etc/arinna
 
 cp resources/config.yaml /etc/arinna
-cp resources/logging.taml /etc/arinna
+cp resources/logging.yaml /etc/arinna
