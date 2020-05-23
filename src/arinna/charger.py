@@ -26,10 +26,10 @@ class ChargingManager:
 
             if (
                     is_charging_to_floating_enabled == 1.0
-                    and battery_voltage < 54.0
+                    and battery_voltage < 52.0
             ) or (
                     is_charging_to_floating_enabled == 0.0
-                    and battery_voltage < 56.4
+                    and battery_voltage < 55.0
             ):
                 self.charger.enable()
             else:
@@ -44,7 +44,7 @@ class ChargingManager:
 
             if is_charging_to_floating_enabled == 1.0:
                 self.charger.disable()
-            elif battery_voltage < 48.0:
+            elif battery_voltage < 47.2:
                 self.charger.enable()
             else:
                 logger.info('Leaving charger as is')
