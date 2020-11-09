@@ -7,18 +7,47 @@ logger = logging.getLogger(__name__)
 
 
 class MQTTClient:
-    def __init__(self, mqtt_client=None):
+    def __init__(self,
+                 mqtt_client=None,
+                 on_connect=None,
+                 on_disconnect=None,
+                 on_message=None,
+                 on_subscribe=None,
+                 user_data=None):
         if not mqtt_client:
             self.mqtt_client = paho.mqtt.client.Client()
             self.mqtt_client.enable_logger()
         else:
             self.mqtt_client = mqtt_client
+        
+        if on_connect:
+            self.set_on_connect(on_connect)
+        if on_disconnect:
+            self.set_on_disconnect(on_disconnect)
+        if on_message:
+            self.set_on_message(on_message)
+        if on_subscribe:
+            self.set_on_subscribe(on_subscribe)
+        if user_data:
+            self.set_user_data(user_data)
 
     def connect(self, host='localhost'):
         logger.info('Connecting MQTT client')
         logger.info('Host: {}'.format(host))
         self.mqtt_client.connect(host)
         logger.info('MQTT client connected')
+
+    def set_on_connect(self, callback):
+        logger.info('Setting on_connect callback')
+        logger.info('Callback: {}'.format(callback))
+        self.mqtt_client.on_connect = callback
+        logger.info('on_connect callback set')
+
+    def set_on_disconnect(self, callback):
+        logger.info('Setting on_disconnect callback')
+        logger.info('Callback: {}'.format(callback))
+        self.mqtt_client.on_disconnect = callback
+        logger.info('on_disconnect callback set')
 
     def set_on_message(self, callback):
         logger.info('Setting on_message callback')

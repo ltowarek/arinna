@@ -10,6 +10,22 @@ from arinna.mqtt_client import MQTTClient
 logger = logging.getLogger(__name__)
 
 
+def on_connect(client, subscriptions, flags, rc):
+    try:
+        logger.info('Connection returned result: {}'.format(rc))
+        for topic in subscriptions:
+            client.subscribe(topic)
+    except Exception:
+        logger.exception('Unknown exception occurred in on_connect')
+
+
+def on_disconnect(client, subscriptions, rc):
+    try:
+        logger.info('Disconnection returned result: {}'.format(rc))
+    except Exception:
+        logger.exception('Unknown exception occurred in on_disconnect')
+
+
 def on_message(_, subscriptions, message):
     try:
         logger.info('Message received')
@@ -147,11 +163,10 @@ def main():
 
     logger.info('MQTT loop started')
     try:
-        with MQTTClient() as mqtt_client:
-            mqtt_client.set_on_message(on_message)
-            mqtt_client.set_user_data(subscriptions)
-            for topic in subscriptions:
-                mqtt_client.subscribe(topic)
+        with MQTTClient(on_connect=on_connect,
+                        on_disconnect=on_disconnect,
+                        on_message=on_message,
+                        user_data=subscriptions) as mqtt_client:
             mqtt_client.loop_forever()
     except KeyboardInterrupt:
         logger.info('MQTT loop stopped by user')
